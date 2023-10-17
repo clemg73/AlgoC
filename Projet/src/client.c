@@ -16,6 +16,47 @@
 #include "client.h"
 #include "bmp.h"
 
+
+int envoie_nom_de_client(int socketfd){
+
+  char name[1024];
+
+  int state = gethostname(name, 1024);
+
+  if(state == -1){
+    perror("hostname");
+    exit(EXIT_FAILURE);
+  }
+
+  char data[1024] = "nom: ";
+
+  strcat(data, name);
+
+  int write_status = write(socketfd, data, strlen(data));
+  if (write_status < 0)
+  {
+    perror("erreur ecriture");
+    exit(EXIT_FAILURE);
+  }
+
+  // la réinitialisation de l'ensemble des données
+  memset(data, 0, sizeof(data));
+
+  // lire les données de la socket
+  int read_status = read(socketfd, data, sizeof(data));
+  if (read_status < 0)
+  {
+    perror("erreur lecture");
+    return -1;
+  }
+
+  printf("Nom reçu: %s\n", data);
+
+  return 0;
+}
+
+
+
 /*
  * Fonction d'envoi et de réception de messages
  * Il faut un argument : l'identifiant de la socket
@@ -31,7 +72,9 @@ int envoie_recois_message(int socketfd)
   // Demandez à l'utilisateur d'entrer un message
   char message[1024];
   printf("Votre message (max 1000 caracteres): ");
+
   fgets(message, sizeof(message), stdin);
+  
   strcpy(data, "message: ");
   strcat(data, message);
 
@@ -57,6 +100,7 @@ int envoie_recois_message(int socketfd)
 
   return 0;
 }
+
 
 void analyse(char *pathname, char *data)
 {
@@ -96,7 +140,9 @@ int envoie_couleurs(int socketfd, char *pathname)
   memset(data, 0, sizeof(data));
   analyse(pathname, data);
 
-  int write_status = write(socketfd, data, strlen(data));
+  char title[1024] = "images: ";
+  strcat(title, data);
+  int write_status = write(socketfd, title, strlen(title));
   if (write_status < 0)
   {
     perror("erreur ecriture");
@@ -105,6 +151,7 @@ int envoie_couleurs(int socketfd, char *pathname)
 
   return 0;
 }
+
 
 int main(int argc, char **argv)
 {
@@ -141,16 +188,17 @@ int main(int argc, char **argv)
     perror("connection serveur");
     exit(EXIT_FAILURE);
   }
-  if (argc != 2)
+
+
+  if (strcmp(argv[1],"-nom") == 0)
   {
-    // envoyer et recevoir un message
+    envoie_nom_de_client(socketfd);
+  }else if (strcmp(argv[1],"-image") == 0)
+  {
+    envoie_couleurs(socketfd, argv[2]);
+  }else if (strcmp(argv[1],"-message") == 0)
+  {
     envoie_recois_message(socketfd);
-  }
-  else
-  {
-    // envoyer et recevoir les couleurs prédominantes
-    // d'une image au format BMP (argv[1])
-    envoie_couleurs(socketfd, argv[1]);
   }
 
   close(socketfd);

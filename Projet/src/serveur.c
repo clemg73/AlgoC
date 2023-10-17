@@ -113,7 +113,19 @@ int plot(char *data)
  */
 int renvoie_message(int client_socket_fd, char *data)
 {
-  int data_size = write(client_socket_fd, (void *)data, strlen(data));
+  int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
+
+  if (data_size < 0)
+  {
+    perror("erreur ecriture");
+    return (EXIT_FAILURE);
+  }
+  return (EXIT_SUCCESS);
+}
+
+int renvoie_nom(int client_socket_fd, char *data)
+{
+  int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
 
   if (data_size < 0)
   {
@@ -133,7 +145,6 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
    * extraire le code des données envoyées par le client.
    * Les données envoyées par le client peuvent commencer par le mot "message :" ou un autre mot.
    */
-  printf("Message recu: %s\n", data);
   char code[10];
   sscanf(data, "%s", code);
 
@@ -142,11 +153,14 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
   {
     renvoie_message(client_socket_fd, data);
   }
-  else
+  else if (strcmp(code, "nom:") == 0)
+  {
+    renvoie_nom(client_socket_fd, data);
+  }
+  else if (strcmp(code, "images:") == 0)
   {
     plot(data);
   }
-
   return (EXIT_SUCCESS);
 }
 

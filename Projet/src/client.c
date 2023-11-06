@@ -104,7 +104,7 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
 int envoie_couleurs(int socketfd, char *myList[], int len){
   int compteur;
   char data[1024] = "color: ";
-  for (compteur = 0 ; compteur <=  len; compteur++)
+  for (compteur = 0 ; compteur < len; compteur++)
   {
       printf("valeur: %s\n",myList[compteur]);
       strcat(data, myList[compteur]);

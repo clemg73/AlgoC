@@ -101,6 +101,39 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
 
 }
 
+int envoie_couleurs(int socketfd, char *myList[], int len){
+  int compteur;
+  char data[1024] = "color: ";
+  for (compteur = 0 ; compteur <=  len; compteur++)
+  {
+      printf("valeur: %s\n",myList[compteur]);
+      strcat(data, myList[compteur]);
+      strcat(data, " ");
+  }
+  printf("str : %s",data);
+
+  int write_status = write(socketfd, data, strlen(data));
+  if (write_status < 0)
+  {
+    perror("erreur ecriture");
+    exit(EXIT_FAILURE);
+  }
+
+  // la réinitialisation de l'ensemble des données
+  memset(data, 0, sizeof(data));
+
+  // lire les données de la socket
+  int read_status = read(socketfd, data, sizeof(data));
+  if (read_status < 0)
+  {
+    perror("erreur lecture");
+    return -1;
+  }
+
+  printf("Message recu: %s\n", data);
+  return 0;
+}
+
 /*
  * Fonction d'envoi et de réception de messages
  * Il faut un argument : l'identifiant de la socket
@@ -178,7 +211,7 @@ void analyse(char *pathname, char *data)
   data[strlen(data) - 1] = '\0';
 }
 
-int envoie_couleurs(int socketfd, char *pathname)
+int envoie_images(int socketfd, char *pathname)
 {
   char data[1024];
   memset(data, 0, sizeof(data));
@@ -239,13 +272,22 @@ int main(int argc, char **argv)
     envoie_nom_de_client(socketfd);
   }else if (strcmp(argv[1],"-image") == 0)
   {
-    envoie_couleurs(socketfd, argv[2]);
+    envoie_images(socketfd, argv[2]);
   }else if (strcmp(argv[1],"-message") == 0)
   {
     envoie_recois_message(socketfd);
   }else if (strcmp(argv[1],"-calcul") == 0)
   {
     envoie_operateur_numeros(socketfd,argv[2],atof(argv[3]),atof(argv[4]));
+  }else if (strcmp(argv[1],"-color") == 0)
+  {
+    char *myList[atoi(argv[2])];
+    int compteur;
+    for (compteur = 0 ; compteur <=  atoi(argv[2]); compteur++)
+    {
+        myList[compteur] = argv[compteur+3];
+    }
+    envoie_couleurs(socketfd,myList,atoi(argv[2]));
   }
 
   close(socketfd);

@@ -135,6 +135,34 @@ int renvoie_nom(int client_socket_fd, char *data)
   return (EXIT_SUCCESS);
 }
 
+int renvoie_couleur(int client_socket_fd, char data[1024]){
+  char delim[] = " ";
+  char colors[100][100];
+  int colorsCount = 0;
+
+  char *ptr = strtok(data, delim);
+
+  while (ptr != NULL) {
+    strcpy(colors[colorsCount], ptr);
+    colorsCount++;
+    ptr = strtok(NULL, delim);
+  }
+
+  FILE *fp;
+  fp = fopen("colors.txt", "w");
+
+  for(int i = 1; i < colorsCount; i++){
+    printf("couleur %i: %s\n", i, colors[i]);
+    fprintf(fp, "%s\n",colors[i]);
+  }
+  fclose(fp);
+
+
+
+
+  return (EXIT_SUCCESS);
+}
+
 int recois_numeros_calcule(int client_socket_fd, char data[1024])
 {
   char delim[] = " ";
@@ -196,7 +224,6 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
    */
   char code[10];
   sscanf(data, "%s", code);
-
   // Si le message commence par le mot: 'message:'
   if (strcmp(code, "message:") == 0)
   {
@@ -210,12 +237,17 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
   {
     plot(data);
   }
+  else if (strcmp(code, "color:") == 0)
+  {
+    renvoie_couleur(client_socket_fd, data);
+  }
   else if (strcmp(code, "calcul:") == 0)
   {
     recois_numeros_calcule(client_socket_fd, data);
   }
   return (EXIT_SUCCESS);
 }
+
 
 // Fonction de gestion du signal Ctrl+C
 void gestionnaire_ctrl_c(int signal)

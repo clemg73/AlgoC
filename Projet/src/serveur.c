@@ -135,6 +135,55 @@ int renvoie_nom(int client_socket_fd, char *data)
   return (EXIT_SUCCESS);
 }
 
+int recois_numeros_calcule(int client_socket_fd, char data[1024])
+{
+  char delim[] = " ";
+  
+  char words[100][100];
+
+  char *ptr = strtok(data, delim);
+  int wordCount = 0;
+
+  while (ptr != NULL) {
+      strcpy(words[wordCount], ptr);
+      wordCount++;
+      ptr = strtok(NULL, delim);
+  }
+
+  double number1;
+  double number2;
+  number1 = strtod(words[2], NULL);
+  number2 = strtod(words[3], NULL);
+  double result;
+  if(strcmp(words[1],"+")==0)
+  {
+    result = number1+number2;
+  }
+  else if(strcmp(words[1],"-")==0)
+  {
+    result = number1-number2;
+  }
+  else  if(strcmp(words[1],"x")==0)
+  {
+    result = number1*number2;
+  }
+  else  if(strcmp(words[1],"/")==0)
+  {
+    result = number1/number2;
+  }
+
+  char res[15] = {0};
+  sprintf(res, "%.2lf", result);
+  int data_size = write(client_socket_fd, (void *)res, strnlen(data, 1024));
+
+  if (data_size < 0)
+  {
+    perror("erreur ecriture");
+    return (EXIT_FAILURE);
+  }
+  return (EXIT_SUCCESS);
+}
+
 /* accepter la nouvelle connection d'un client et lire les données
  * envoyées par le client. En suite, le serveur envoie un message
  * en retour
@@ -160,6 +209,10 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
   else if (strcmp(code, "images:") == 0)
   {
     plot(data);
+  }
+  else if (strcmp(code, "calcul:") == 0)
+  {
+    recois_numeros_calcule(client_socket_fd, data);
   }
   return (EXIT_SUCCESS);
 }

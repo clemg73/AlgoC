@@ -55,7 +55,51 @@ int envoie_nom_de_client(int socketfd){
   return 0;
 }
 
+int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double nb2)
+{
+    printf("Calcul opération: %s\n", operateur);
+    printf("Nombre 1: %lf\n", nb1);
+    printf("Nombre 2: %lf\n", nb2);
 
+
+    char data[1024] = "calcul: ";
+
+    char nombre1[15] = {0};
+    sprintf(nombre1, "%.2lf", nb1);
+
+    char nombre2[15] = {0};
+    sprintf(nombre2, "%.2lf", nb2);
+
+    strcat(data, operateur);
+    strcat(data, " ");
+    strcat(data, nombre1);
+    strcat(data, " ");
+    strcat(data, nombre2);
+    printf("Envoie: %s\n", data);
+
+    int write_status = write(socketfd, data, strlen(data));
+    if (write_status < 0)
+    {
+      perror("erreur ecriture");
+      exit(EXIT_FAILURE);
+    }
+
+    // la réinitialisation de l'ensemble des données
+    memset(data, 0, sizeof(data));
+
+    // lire les données de la socket
+    int read_status = read(socketfd, data, sizeof(data));
+    if (read_status < 0)
+    {
+      perror("erreur lecture");
+      return -1;
+    }
+
+    printf("Resulat du calcul reçu: %s\n", data);
+
+    return 0;
+
+}
 
 /*
  * Fonction d'envoi et de réception de messages
@@ -199,6 +243,9 @@ int main(int argc, char **argv)
   }else if (strcmp(argv[1],"-message") == 0)
   {
     envoie_recois_message(socketfd);
+  }else if (strcmp(argv[1],"-calcul") == 0)
+  {
+    envoie_operateur_numeros(socketfd,argv[2],atof(argv[3]),atof(argv[4]));
   }
 
   close(socketfd);

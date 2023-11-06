@@ -20,7 +20,6 @@
 int envoie_nom_de_client(int socketfd){
 
   char name[1024];
-
   int state = gethostname(name, 1024);
 
   if(state == -1){
@@ -55,12 +54,12 @@ int envoie_nom_de_client(int socketfd){
   return 0;
 }
 
+
 int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double nb2)
 {
     printf("Calcul opération: %s\n", operateur);
     printf("Nombre 1: %lf\n", nb1);
     printf("Nombre 2: %lf\n", nb2);
-
 
     char data[1024] = "calcul: ";
 
@@ -104,13 +103,12 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
 int envoie_couleurs(int socketfd, char *myList[], int len){
   int compteur;
   char data[1024] = "color: ";
-  for (compteur = 0 ; compteur <=  len; compteur++)
-  {
-      printf("valeur: %s\n",myList[compteur]);
+  for (compteur = 0 ; compteur <  len; compteur++)
+  { 
       strcat(data, myList[compteur]);
       strcat(data, " ");
   }
-  printf("str : %s",data);
+  printf("%s\n",data);
 
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
@@ -130,9 +128,50 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
     return -1;
   }
 
-  printf("Message recu: %s\n", data);
+  printf("Couleurs: %s\n", data);
   return 0;
 }
+
+
+int envoie_balise(int socketfd, char *myList[], int len){
+  
+  int compteur;
+  char data[1024] = "balises: ";
+  for (compteur = 0 ; compteur <  len; compteur++)
+  {
+      strcat(data, myList[compteur]);
+      strcat(data, " ");
+  }
+
+  printf("%s\n",data);
+
+  int write_status = write(socketfd, data, strlen(data));
+  if (write_status < 0)
+  {
+    perror("erreur ecriture");
+    exit(EXIT_FAILURE);
+  }
+
+  // la réinitialisation de l'ensemble des données
+  memset(data, 0, sizeof(data));
+
+  // lire les données de la socket
+  int read_status = read(socketfd, data, sizeof(data));
+  if (read_status < 0)
+  {
+    perror("erreur lecture");
+    return -1;
+  }
+  
+  printf("Balises: %s\n", data);
+  return 0;
+}
+
+
+
+
+
+
 
 /*
  * Fonction d'envoi et de réception de messages
@@ -288,6 +327,15 @@ int main(int argc, char **argv)
         myList[compteur] = argv[compteur+3];
     }
     envoie_couleurs(socketfd,myList,atoi(argv[2]));
+  }else if (strcmp(argv[1],"-balises") == 0)
+  {
+    char *myList[atoi(argv[2])];
+    int compteur;
+    for (compteur = 0 ; compteur <=  atoi(argv[2]); compteur++)
+    {
+      myList[compteur] = argv[compteur+3];
+    }
+    envoie_balise(socketfd,myList,atoi(argv[2]));
   }
 
   close(socketfd);

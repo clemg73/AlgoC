@@ -51,32 +51,29 @@ int plot(char *data)
   
   char *str = data;
   
-  //printf("%d", *str);
-
   char *token = strtok_r(str, ",", &saveptr);
-  char* numberofColors = strtok(token, ": ");
+  char *subtoken = strtok(token, ": ");
 
-  while(numberofColors != 0){
-    printf("%s\n", numberofColors);
-    numberofColors = strtok(0, ": ");
+  int numberofColors;
+
+  while(subtoken != 0){
+    printf("%s : %li\n", subtoken, strlen(subtoken));
+
+    //Comme N < 30, on sait qu'il y a pas plus de deux chiffres
+    if(strlen(subtoken)<=2){
+      numberofColors = atoi(subtoken);
+      break;
+    }
+    else
+    {
+      subtoken = strtok(0, ": ");    
+    }
+    
   }
 
-  //Affiche:
-  /*
-    images
-    couleurs
-    25
+  printf("%i\n", numberofColors);
 
-    la derniere valeur de numberofColors = "25"
-    -> la convertir en int et attribuer la valeur à num_colors 
-  */
-
-  printf("%i\n", atoi(numberofColors));
-  // Problème: le print indique segmentation false
-
-  const int num_colors = 30;
-
-  double angles[num_colors];
+  double angles[numberofColors];
   memset(angles, 0, sizeof(angles));
 
   FILE *svg_file = fopen(svg_file_path, "w");
@@ -106,7 +103,7 @@ int plot(char *data)
       break;
     }
     str = NULL;
-    angles[i] = 360.0 / num_colors;
+    angles[i] = 360.0 / numberofColors;
 
     double end_angle = start_angle + angles[i];
 

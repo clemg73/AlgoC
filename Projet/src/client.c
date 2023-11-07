@@ -224,7 +224,7 @@ void analyse(char *pathname, char *data, int numberofColors)
   char temp_string[numberofColors];
   sprintf(temp_string, "%d, ", numberofColors);
 
-  if (cc->size < numberofColors)
+  if (cc->size < numberofColors && numberofColors < 30)
   {
     sprintf(temp_string, "%d,", cc->size);
   }

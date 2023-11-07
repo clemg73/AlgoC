@@ -212,22 +212,26 @@ int envoie_recois_message(int socketfd)
 }
 
 
-void analyse(char *pathname, char *data)
+void analyse(char *pathname, char *data, int numberofColors)
 {
   // compte de couleurs
   couleur_compteur *cc = analyse_bmp_image(pathname);
 
   int count;
   strcpy(data, "couleurs: ");
-  char temp_string[10] = "10,";
-  if (cc->size < 10)
+  
+  //Formatter la chaîne
+  char temp_string[numberofColors];
+  sprintf(temp_string, "%d, ", numberofColors);
+
+  if (cc->size < numberofColors)
   {
     sprintf(temp_string, "%d,", cc->size);
   }
   strcat(data, temp_string);
 
-  // choisir 10 couleurs
-  for (count = 1; count < 11 && cc->size - count > 0; count++)
+  // choisir n couleurs
+  for (count = 1; count < numberofColors+1 && cc->size - count > 0; count++)
   {
     if (cc->compte_bit == BITS32)
     {
@@ -244,17 +248,19 @@ void analyse(char *pathname, char *data)
   data[strlen(data) - 1] = '\0';
 }
 
-int envoie_images(int socketfd, char *pathname)
+int envoie_images(int socketfd, char *pathname, int numberofColors)
 {
   char data[1024];
 
   memset(data, 0, sizeof(data));
-  analyse(pathname, data);
+  analyse(pathname, data, numberofColors);
 
-  //char title[2048] = "images: ";
-  //strcat(title, data);
+  char title[1024] = "images: ";
+  strcat(title, data);
 
-  int write_status = write(socketfd, data, strlen(data));
+  printf("%s\n", title);
+
+  int write_status = write(socketfd, title, strlen(title));
   if (write_status < 0)
   {
     perror("erreur ecriture");
@@ -306,7 +312,7 @@ int main(int argc, char **argv)
     envoie_nom_de_client(socketfd);
   }else if (strcmp(argv[1],"-image") == 0)
   {
-    envoie_images(socketfd, argv[2]);
+    envoie_images(socketfd, argv[2], atoi(argv[3]));
   }else if (strcmp(argv[1],"-message") == 0)
   {
     envoie_recois_message(socketfd);

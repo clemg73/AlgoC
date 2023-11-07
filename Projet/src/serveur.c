@@ -48,9 +48,33 @@ int plot(char *data)
 {
   int i;
   char *saveptr = NULL;
+  
   char *str = data;
+  
+  //printf("%d", *str);
+
   char *token = strtok_r(str, ",", &saveptr);
-  const int num_colors = 10;
+  char* numberofColors = strtok(token, ": ");
+
+  while(numberofColors != 0){
+    printf("%s\n", numberofColors);
+    numberofColors = strtok(0, ": ");
+  }
+
+  //Affiche:
+  /*
+    images
+    couleurs
+    25
+
+    la derniere valeur de numberofColors = "25"
+    -> la convertir en int et attribuer la valeur à num_colors 
+  */
+
+  printf("%i\n", atoi(numberofColors));
+  // Problème: le print indique segmentation false
+
+  const int num_colors = 30;
 
   double angles[num_colors];
   memset(angles, 0, sizeof(angles));

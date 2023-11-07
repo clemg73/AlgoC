@@ -167,12 +167,6 @@ int envoie_balise(int socketfd, char *myList[], int len){
   return 0;
 }
 
-
-
-
-
-
-
 /*
  * Fonction d'envoi et de réception de messages
  * Il faut un argument : l'identifiant de la socket

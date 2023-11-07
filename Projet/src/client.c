@@ -247,12 +247,14 @@ void analyse(char *pathname, char *data)
 int envoie_images(int socketfd, char *pathname)
 {
   char data[1024];
+
   memset(data, 0, sizeof(data));
   analyse(pathname, data);
 
-  char title[1024] = "images: ";
-  strcat(title, data);
-  int write_status = write(socketfd, title, strlen(title));
+  //char title[2048] = "images: ";
+  //strcat(title, data);
+
+  int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
     perror("erreur ecriture");
@@ -261,7 +263,6 @@ int envoie_images(int socketfd, char *pathname)
 
   return 0;
 }
-
 
 int main(int argc, char **argv)
 {

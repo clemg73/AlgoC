@@ -152,16 +152,55 @@ int renvoie_couleur(int client_socket_fd, char data[1024]){
   fp = fopen("colors.txt", "w");
 
   for(int i = 1; i < colorsCount; i++){
-    printf("couleur %i: %s\n", i, colors[i]);
-    fprintf(fp, "%s\n",colors[i]);
+    printf("écriture de couleur %i...: #%s\n", i, colors[i]);
+    fprintf(fp, "#%s\n",colors[i]);
   }
   fclose(fp);
 
+  char newData[] = "enregistrees";
+  int data_size = write(client_socket_fd, (void *)newData, strnlen(newData, 1024));
 
-
-
+  if (data_size < 0)
+  {
+    perror("erreur ecriture");
+    return (EXIT_FAILURE);
+  }
   return (EXIT_SUCCESS);
 }
+
+int renvoie_balise(int client_socket_fd, char data[1024]){
+  char delim[] = " ";
+  char balises[100][100];
+  int balisesCount = 0;
+
+  char *ptr = strtok(data, delim);
+
+  while (ptr != NULL) {
+    strcpy(balises[balisesCount], ptr);
+    balisesCount++;
+    ptr = strtok(NULL, delim);
+  }
+
+  FILE *fp;
+  fp = fopen("balises.txt", "w");
+
+  for(int i = 1; i < balisesCount; i++){
+    printf("écriture de balise %i... %s\n", i, balises[i]);
+    fprintf(fp, "#%s\n", balises[i]);
+  }
+  fclose(fp);
+
+  char newData[] = "enregistrees";
+  int data_size = write(client_socket_fd, (void *)newData, strnlen(newData, 1024));
+
+  if (data_size < 0)
+  {
+    perror("erreur ecriture");
+    return (EXIT_FAILURE);
+  }
+  return (EXIT_SUCCESS);
+}
+
 
 int recois_numeros_calcule(int client_socket_fd, char data[1024])
 {
@@ -183,6 +222,7 @@ int recois_numeros_calcule(int client_socket_fd, char data[1024])
   number1 = strtod(words[2], NULL);
   number2 = strtod(words[3], NULL);
   double result;
+  
   if(strcmp(words[1],"+")==0)
   {
     result = number1+number2;
@@ -240,6 +280,10 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
   else if (strcmp(code, "color:") == 0)
   {
     renvoie_couleur(client_socket_fd, data);
+  }
+  else if (strcmp(code, "balises:") == 0)
+  {
+    renvoie_balise(client_socket_fd, data);
   }
   else if (strcmp(code, "calcul:") == 0)
   {

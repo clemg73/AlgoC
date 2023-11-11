@@ -48,11 +48,32 @@ int plot(char *data)
 {
   int i;
   char *saveptr = NULL;
+  
   char *str = data;
+  
   char *token = strtok_r(str, ",", &saveptr);
-  const int num_colors = 10;
+  char *subtoken = strtok(token, ": ");
 
-  double angles[num_colors];
+  int numberofColors;
+
+  while(subtoken != 0){
+    printf("%s : %li\n", subtoken, strlen(subtoken));
+
+    //Comme N < 30, on sait qu'il y a pas plus de deux chiffres
+    if(strlen(subtoken)<=2){
+      numberofColors = atoi(subtoken);
+      break;
+    }
+    else
+    {
+      subtoken = strtok(0, ": ");    
+    }
+    
+  }
+
+  printf("%i\n", numberofColors);
+
+  double angles[numberofColors];
   memset(angles, 0, sizeof(angles));
 
   FILE *svg_file = fopen(svg_file_path, "w");
@@ -82,7 +103,7 @@ int plot(char *data)
       break;
     }
     str = NULL;
-    angles[i] = 360.0 / num_colors;
+    angles[i] = 360.0 / numberofColors;
 
     double end_angle = start_angle + angles[i];
 

@@ -238,12 +238,14 @@ int recois_numeros_calcule(int client_socket_fd, char data[1024])
       ptr = strtok(NULL, delim);
   }
 
+
   double number1;
   double number2;
   number1 = strtod(words[2], NULL);
   number2 = strtod(words[3], NULL);
   double result;
   
+
   if(strcmp(words[1],"+")==0)
   {
     result = number1+number2;
@@ -260,7 +262,6 @@ int recois_numeros_calcule(int client_socket_fd, char data[1024])
   {
     result = number1/number2;
   }
-
   char res[15] = {0};
   sprintf(res, "%.2lf", result);
   int data_size = write(client_socket_fd, (void *)res, strnlen(data, 1024));
@@ -273,6 +274,21 @@ int recois_numeros_calcule(int client_socket_fd, char data[1024])
   return (EXIT_SUCCESS);
 }
 
+int decode(char* data, char* code, char* value){
+
+  char* pos_start_code = strstr(data, "\"code\":\"");
+  pos_start_code += strlen("\"code\":\"");
+  char* pos_end_code = strchr(pos_start_code, '\"');
+  snprintf(code, 1024, "%.*s", (int)(pos_end_code - pos_start_code), pos_start_code);
+
+  char* pos_start_value = strstr(data, "\"valeurs\":[");
+  pos_start_value += strlen("\"valeurs\":[");
+  char* pos_end_value = strchr(pos_start_value, ']');
+  snprintf(value, 1024, "%.*s", (int)(pos_end_value - pos_start_value-2), pos_start_value+1);
+
+  return 0;
+}
+
 /* accepter la nouvelle connection d'un client et lire les données
  * envoyées par le client. En suite, le serveur envoie un message
  * en retour
@@ -283,32 +299,36 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
    * extraire le code des données envoyées par le client.
    * Les données envoyées par le client peuvent commencer par le mot "message :" ou un autre mot.
    */
-  char code[10];
-  sscanf(data, "%s", code);
+  char code[1024];
+  char value[1024];
+  decode(data,code,value);
   // Si le message commence par le mot: 'message:'
-  if (strcmp(code, "message:") == 0)
+  if (strcmp(code, "message") == 0)
   {
-    renvoie_message(client_socket_fd, data);
+    printf("%s\n",value);
+    renvoie_message(client_socket_fd, value);
   }
-  else if (strcmp(code, "nom:") == 0)
+  else if (strcmp(code, "nom") == 0)
   {
-    renvoie_nom(client_socket_fd, data);
+    renvoie_nom(client_socket_fd, value);
   }
-  else if (strcmp(code, "images:") == 0)
+  else if (strcmp(code, "images") == 0)
   {
-    plot(data);
+    plot(value);
   }
-  else if (strcmp(code, "color:") == 0)
+  else if (strcmp(code, "color") == 0)
   {
-    renvoie_couleur(client_socket_fd, data);
+    renvoie_couleur(client_socket_fd, value);
   }
-  else if (strcmp(code, "balises:") == 0)
+  else if (strcmp(code, "balises") == 0)
   {
-    renvoie_balise(client_socket_fd, data);
+    renvoie_balise(client_socket_fd, value);
   }
-  else if (strcmp(code, "calcul:") == 0)
+  else if (strcmp(code, "calcul") == 0)
   {
-    recois_numeros_calcule(client_socket_fd, data);
+      printf("%s\n",value);
+
+    recois_numeros_calcule(client_socket_fd, value);
   }
   return (EXIT_SUCCESS);
 }

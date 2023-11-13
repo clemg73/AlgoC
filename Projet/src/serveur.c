@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "json.h"
 
 #include "serveur.h"
 int socketfd;
@@ -44,36 +45,13 @@ double degreesToRadians(double degrees)
   return degrees * M_PI / 180.0;
 }
 
-int plot(char *data)
+int plot(char **data, int nb)
 {
-  int i;
-  char *saveptr = NULL;
-  
-  char *str = data;
-  
-  char *token = strtok_r(str, ",", &saveptr);
-  char *subtoken = strtok(token, ": ");
-
-  int numberofColors;
-
-  while(subtoken != 0){
-    printf("%s : %li\n", subtoken, strlen(subtoken));
-
-    //Comme N < 30, on sait qu'il y a pas plus de deux chiffres
-    if(strlen(subtoken)<=2){
-      numberofColors = atoi(subtoken);
-      break;
-    }
-    else
-    {
-      subtoken = strtok(0, ": ");    
-    }
-    
-  }
+  int numberofColors = atoi(data[0]);
 
   printf("%i\n", numberofColors);
 
-  double angles[numberofColors];
+  double angles[numberofColors + 1];
   memset(angles, 0, sizeof(angles));
 
   FILE *svg_file = fopen(svg_file_path, "w");
@@ -93,16 +71,9 @@ int plot(char *data)
 
   double start_angle = -90.0;
 
-  str = NULL;
-  i = 0;
-  while (1)
+  for (int i = 1; i < nb; i++)
   {
-    token = strtok_r(str, ",", &saveptr);
-    if (token == NULL)
-    {
-      break;
-    }
-    str = NULL;
+   
     angles[i] = 360.0 / numberofColors;
 
     double end_angle = start_angle + angles[i];
@@ -116,10 +87,9 @@ int plot(char *data)
     double y2 = center_y + radius * sin(end_angle_rad);
 
     fprintf(svg_file, "  <path d=\"M%.2f,%.2f A%.2f,%.2f 0 0,1 %.2f,%.2f L%.2f,%.2f Z\" fill=\"%s\" />\n",
-            x1, y1, radius, radius, x2, y2, center_x, center_y, token);
+            x1, y1, radius, radius, x2, y2, center_x, center_y, data[i]);
 
     start_angle = end_angle;
-    i++;
   }
 
   fprintf(svg_file, "</svg>\n");
@@ -132,10 +102,10 @@ int plot(char *data)
 
 /* renvoyer un message (*data) au client (client_socket_fd)
  */
-int renvoie_message(int client_socket_fd, char *data)
+int renvoie_message(int client_socket_fd, char **data)
 {
-  int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
-
+  int data_size = write(client_socket_fd, (void *)data[0], strnlen(data[0], 1024));
+  free(data);
   if (data_size < 0)
   {
     perror("erreur ecriture");
@@ -144,10 +114,10 @@ int renvoie_message(int client_socket_fd, char *data)
   return (EXIT_SUCCESS);
 }
 
-int renvoie_nom(int client_socket_fd, char *data)
+int renvoie_nom(int client_socket_fd, char **data)
 {
-  int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
-
+  int data_size = write(client_socket_fd, (void *)data[0], strnlen(data[0], 1024));
+  free(data);
   if (data_size < 0)
   {
     perror("erreur ecriture");
@@ -156,27 +126,19 @@ int renvoie_nom(int client_socket_fd, char *data)
   return (EXIT_SUCCESS);
 }
 
-int renvoie_couleur(int client_socket_fd, char data[1024]){
-  char delim[] = " ";
-  char colors[100][100];
-  int colorsCount = 0;
-
-  char *ptr = strtok(data, delim);
-
-  while (ptr != NULL) {
-    strcpy(colors[colorsCount], ptr);
-    colorsCount++;
-    ptr = strtok(NULL, delim);
-  }
+int renvoie_couleur(int client_socket_fd, char **data, int nb){
 
   FILE *fp;
   fp = fopen("colors.txt", "w");
 
-  for(int i = 1; i < colorsCount; i++){
-    printf("écriture de couleur %i...: #%s\n", i, colors[i]);
-    fprintf(fp, "#%s\n",colors[i]);
+  for(int i = 0; i < nb; i++){
+    printf("écriture de couleur %i...: %s\n", i, data[i]);
+    fprintf(fp, "%s\n",data[i]);
   }
   fclose(fp);
+
+  free(data[0]);
+  free(data);
 
   char newData[] = "enregistrees";
   int data_size = write(client_socket_fd, (void *)newData, strnlen(newData, 1024));
@@ -189,27 +151,20 @@ int renvoie_couleur(int client_socket_fd, char data[1024]){
   return (EXIT_SUCCESS);
 }
 
-int renvoie_balise(int client_socket_fd, char data[1024]){
-  char delim[] = " ";
-  char balises[100][100];
-  int balisesCount = 0;
+int renvoie_balise(int client_socket_fd, char **balises, int nb){
 
-  char *ptr = strtok(data, delim);
-
-  while (ptr != NULL) {
-    strcpy(balises[balisesCount], ptr);
-    balisesCount++;
-    ptr = strtok(NULL, delim);
-  }
 
   FILE *fp;
   fp = fopen("balises.txt", "w");
 
-  for(int i = 1; i < balisesCount; i++){
+  for(int i = 0; i < nb; i++){
     printf("écriture de balise %i... %s\n", i, balises[i]);
-    fprintf(fp, "#%s\n", balises[i]);
+    fprintf(fp, "%s\n", balises[i]);
   }
   fclose(fp);
+
+  free(balises[0]);
+  free(balises);
 
   char newData[] = "enregistrees";
   int data_size = write(client_socket_fd, (void *)newData, strnlen(newData, 1024));
@@ -223,49 +178,35 @@ int renvoie_balise(int client_socket_fd, char data[1024]){
 }
 
 
-int recois_numeros_calcule(int client_socket_fd, char data[1024])
+int recois_numeros_calcule(int client_socket_fd, char **words)
 {
-  char delim[] = " ";
-  
-  char words[100][100];
-
-  char *ptr = strtok(data, delim);
-  int wordCount = 0;
-
-  while (ptr != NULL) {
-      strcpy(words[wordCount], ptr);
-      wordCount++;
-      ptr = strtok(NULL, delim);
-  }
-
-
   double number1;
   double number2;
-  number1 = strtod(words[2], NULL);
-  number2 = strtod(words[3], NULL);
+  number1 = strtod(words[1], NULL);
+  number2 = strtod(words[2], NULL);
   double result;
   
 
-  if(strcmp(words[1],"+")==0)
+  if(strcmp(words[0],"+")==0)
   {
     result = number1+number2;
   }
-  else if(strcmp(words[1],"-")==0)
+  else if(strcmp(words[0],"-")==0)
   {
     result = number1-number2;
   }
-  else  if(strcmp(words[1],"x")==0)
+  else  if(strcmp(words[0],"x")==0)
   {
     result = number1*number2;
   }
-  else  if(strcmp(words[1],"/")==0)
+  else  if(strcmp(words[0],"/")==0)
   {
     result = number1/number2;
   }
   char res[15] = {0};
   sprintf(res, "%.2lf", result);
-  int data_size = write(client_socket_fd, (void *)res, strnlen(data, 1024));
-
+  int data_size = write(client_socket_fd, (void *)res, strnlen(res, 1024));
+  free(words);
   if (data_size < 0)
   {
     perror("erreur ecriture");
@@ -299,36 +240,39 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
    * extraire le code des données envoyées par le client.
    * Les données envoyées par le client peuvent commencer par le mot "message :" ou un autre mot.
    */
-  char code[1024];
-  char value[1024];
-  decode(data,code,value);
-  // Si le message commence par le mot: 'message:'
-  if (strcmp(code, "message") == 0)
-  {
-    printf("%s\n",value);
-    renvoie_message(client_socket_fd, value);
-  }
-  else if (strcmp(code, "nom") == 0)
-  {
-    renvoie_nom(client_socket_fd, value);
-  }
-  else if (strcmp(code, "images") == 0)
-  {
-    plot(value);
-  }
-  else if (strcmp(code, "color") == 0)
-  {
-    renvoie_couleur(client_socket_fd, value);
-  }
-  else if (strcmp(code, "balises") == 0)
-  {
-    renvoie_balise(client_socket_fd, value);
-  }
-  else if (strcmp(code, "calcul") == 0)
-  {
-      printf("%s\n",value);
+//"{\"code\":\"calcul\",\"valeurs\":[\"+\",\"2.00\",\"3.00\"]}"
+  JsonObject object = parser(data);
 
-    recois_numeros_calcule(client_socket_fd, value);
+  // Si le message commence par le mot: 'message:'
+  if (strcmp(object.code,"message")==0)
+  {
+    free(object.code);
+    renvoie_message(client_socket_fd, object.valeurs);
+  }
+  else if (strcmp(object.code,"nom")==0)
+  {
+    free(object.code);
+    renvoie_nom(client_socket_fd, object.valeurs);
+  }
+  else if (strcmp(object.code,"images")==0)
+  {
+    free(object.code);
+    plot(object.valeurs,object.nb);
+  }
+  else if (strcmp(object.code,"color")==0)
+  {   
+    free(object.code);
+    renvoie_couleur(client_socket_fd, object.valeurs,object.nb);
+  }
+  else if (strcmp(object.code,"balises")==0)
+  {
+    free(object.code);
+    renvoie_balise(client_socket_fd, object.valeurs,object.nb);
+  }
+  else if (strcmp(object.code,"calcul")==0)
+  {
+    free(object.code);
+    recois_numeros_calcule(client_socket_fd, object.valeurs);
   }
   return (EXIT_SUCCESS);
 }
@@ -416,3 +360,4 @@ int main()
 
   return 0;
 }
+

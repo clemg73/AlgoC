@@ -16,22 +16,25 @@
 #include "client.h"
 #include "bmp.h"
 
+char* parser(char *code,char *data){
+  char *message = malloc(1024);
+  snprintf(message, 1024, "{\"code\":\"%s\",\"valeurs\":[\"%s\"]}",code,data);
+  return message;
+}
 
 int envoie_nom_de_client(int socketfd){
 
   char name[1024];
   int state = gethostname(name, 1024);
 
+
   if(state == -1){
     perror("hostname");
     exit(EXIT_FAILURE);
   }
-
-  char data[1024] = "nom: ";
-
-  strcat(data, name);
-
+  char *data = parser("nom",name);
   int write_status = write(socketfd, data, strlen(data));
+
   if (write_status < 0)
   {
     perror("erreur ecriture");
@@ -39,7 +42,7 @@ int envoie_nom_de_client(int socketfd){
   }
 
   // la réinitialisation de l'ensemble des données
-  memset(data, 0, sizeof(data));
+  memset(data, 0, strlen(data));
 
   // lire les données de la socket
   int read_status = read(socketfd, data, sizeof(data));
@@ -50,7 +53,7 @@ int envoie_nom_de_client(int socketfd){
   }
 
   printf("Nom reçu: %s\n", data);
-
+  free(data);
   return 0;
 }
 
@@ -61,7 +64,7 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
     printf("Nombre 1: %lf\n", nb1);
     printf("Nombre 2: %lf\n", nb2);
 
-    char data[1024] = "calcul: ";
+    char operation[1024] = ". ";
 
     char nombre1[15] = {0};
     sprintf(nombre1, "%.2lf", nb1);
@@ -69,22 +72,22 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
     char nombre2[15] = {0};
     sprintf(nombre2, "%.2lf", nb2);
 
-    strcat(data, operateur);
-    strcat(data, " ");
-    strcat(data, nombre1);
-    strcat(data, " ");
-    strcat(data, nombre2);
-    printf("Envoie: %s\n", data);
+    strcat(operation, operateur);
+    strcat(operation, " ");
+    strcat(operation, nombre1);
+    strcat(operation, " ");
+    strcat(operation, nombre2);
 
+    char *data = parser("calcul",operation);
     int write_status = write(socketfd, data, strlen(data));
     if (write_status < 0)
     {
       perror("erreur ecriture");
       exit(EXIT_FAILURE);
     }
-
+  
     // la réinitialisation de l'ensemble des données
-    memset(data, 0, sizeof(data));
+    memset(data, 0, strlen(data));
 
     // lire les données de la socket
     int read_status = read(socketfd, data, sizeof(data));
@@ -102,14 +105,14 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
 
 int envoie_couleurs(int socketfd, char *myList[], int len){
   int compteur;
-  char data[1024] = "color: ";
+  char colors[1024] = ". ";
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
-      strcat(data, myList[compteur]);
-      strcat(data, " ");
+      strcat(colors, myList[compteur]);
+      strcat(colors, " ");
   }
-  printf("%s\n",data);
 
+  char *data = parser("color",colors);
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -118,7 +121,7 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
   }
 
   // la réinitialisation de l'ensemble des données
-  memset(data, 0, sizeof(data));
+  memset(data, 0, strlen(data));
 
   // lire les données de la socket
   int read_status = read(socketfd, data, sizeof(data));
@@ -136,15 +139,14 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
 int envoie_balise(int socketfd, char *myList[], int len){
   
   int compteur;
-  char data[1024] = "balises: ";
+  char colors[1024] = ". ";
   for (compteur = 0 ; compteur <  len; compteur++)
-  {
-      strcat(data, myList[compteur]);
-      strcat(data, " ");
+  { 
+      strcat(colors, myList[compteur]);
+      strcat(colors, " ");
   }
 
-  printf("%s\n",data);
-
+  char *data = parser("balises",colors);
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -153,7 +155,7 @@ int envoie_balise(int socketfd, char *myList[], int len){
   }
 
   // la réinitialisation de l'ensemble des données
-  memset(data, 0, sizeof(data));
+  memset(data, 0, strlen(data));
 
   // lire les données de la socket
   int read_status = read(socketfd, data, sizeof(data));
@@ -175,19 +177,13 @@ int envoie_balise(int socketfd, char *myList[], int len){
 int envoie_recois_message(int socketfd)
 {
 
-  char data[1024];
-  // la réinitialisation de l'ensemble des données
-  memset(data, 0, sizeof(data));
-
   // Demandez à l'utilisateur d'entrer un message
   char message[1024];
   printf("Votre message (max 1000 caracteres): ");
 
   fgets(message, sizeof(message), stdin);
-  
-  strcpy(data, "message: ");
-  strcat(data, message);
 
+  char *data = parser("message",message);
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -196,7 +192,7 @@ int envoie_recois_message(int socketfd)
   }
 
   // la réinitialisation de l'ensemble des données
-  memset(data, 0, sizeof(data));
+  memset(data, 0, strlen(data));
 
   // lire les données de la socket
   int read_status = read(socketfd, data, sizeof(data));
@@ -251,16 +247,14 @@ void analyse(char *pathname, char *data, int numberofColors)
 int envoie_images(int socketfd, char *pathname, int numberofColors)
 {
   char data[1024];
+    memset(data, 0, sizeof(data));
 
-  memset(data, 0, sizeof(data));
   analyse(pathname, data, numberofColors);
 
-  char title[1024] = "images: ";
-  strcat(title, data);
 
-  printf("%s\n", title);
+  char *temp = parser("images",data);
 
-  int write_status = write(socketfd, title, strlen(title));
+  int write_status = write(socketfd, temp, strlen(temp));
   if (write_status < 0)
   {
     perror("erreur ecriture");

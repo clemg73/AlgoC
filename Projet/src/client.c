@@ -18,7 +18,21 @@
 
 char* parser(char *code,char *data){
   char *message = malloc(1024);
-  snprintf(message, 1024, "{\"code\":\"%s\",\"valeurs\":[\"%s\"]}",code,data);
+  char *token = strtok(data, " ");
+
+  snprintf(message, 1024, "{\"code\":\"%s\",\"valeurs\":[",code);
+  while (token != 0)
+  {
+
+    strcat(message, "\"");
+    strcat(message, token);
+    strcat(message, "\",");
+
+    token = strtok(NULL, " ");
+
+  }
+  
+  strcat(message, "]}");
   return message;
 }
 
@@ -26,7 +40,6 @@ int envoie_nom_de_client(int socketfd){
 
   char name[1024];
   int state = gethostname(name, 1024);
-
 
   if(state == -1){
     perror("hostname");
@@ -98,14 +111,14 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
     }
 
     printf("Resulat du calcul reçu: %s\n", data);
-
+    free(data);
     return 0;
 
 }
 
 int envoie_couleurs(int socketfd, char *myList[], int len){
   int compteur;
-  char colors[1024] = ". ";
+  char colors[1024]="";
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
       strcat(colors, myList[compteur]);
@@ -132,6 +145,7 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
   }
 
   printf("Couleurs: %s\n", data);
+  free(data);
   return 0;
 }
 
@@ -166,6 +180,7 @@ int envoie_balise(int socketfd, char *myList[], int len){
   }
   
   printf("Balises: %s\n", data);
+  free(data);
   return 0;
 }
 
@@ -203,7 +218,7 @@ int envoie_recois_message(int socketfd)
   }
 
   printf("Message recu: %s\n", data);
-
+  free(data);
   return 0;
 }
 

@@ -1,5 +1,5 @@
-COBJS ?= client.o bmp.o couleur.o
-SOBJS ?= serveur.o 
+COBJS ?= client.o bmp.o couleur.o json.o
+SOBJS ?= serveur.o json.o
 
 .SUFFIXES: .c .o
 

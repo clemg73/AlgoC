@@ -18,26 +18,53 @@
 
 char* parser(char *code,char *data){
   char *message = malloc(1024);
-  char *token = strtok(data, " ");
 
+  char *del1 = " ";
+  char *del2 = ",";
+  //char *del3 = "#";
+  
   snprintf(message, 1024, "{\"code\":\"%s\",\"valeurs\":[",code);
-  while (token != 0)
-  {
-    
-    strcat(message, "\"");
-    
-    if(strcmp(code, "color") == 0|| strcmp(code, "balises")==0){
-      strcat(message, "#");
+
+  puts(data);
+  if(strcmp(code, "images") == 0){
+
+    char *imgToken = strtok(data, del2);
+    //char *numberofColorsToken = strtok(imgToken, del3);   
+
+    while (imgToken != 0)
+    {
+
+      strcat(message, "\"");
+      strcat(message, imgToken);
+      strcat(message, "\",");     
+      imgToken = strtok(NULL, del2);
+      
     }
+  }
+  else{
+  
+    char *token = strtok(data, del1);
 
-    strcat(message, token);
-    strcat(message, "\",");
+    while (token != 0)
+    {
 
-    token = strtok(NULL, " ");
+      strcat(message, "\"");
+    
+      if(strcmp(code, "color") == 0|| strcmp(code, "balises")==0){
+        strcat(message, "#");
+      }
 
+      strcat(message, token);
+      strcat(message, "\",");
+      
+      token = strtok(NULL, del1);
+      
+    }
   }
   
   strcat(message, "]}");
+
+  printf("%s\n", message);
 
   return message;
 }
@@ -236,11 +263,11 @@ void analyse(char *pathname, char *data, int numberofColors)
   couleur_compteur *cc = analyse_bmp_image(pathname);
 
   int count;
-  strcpy(data, "couleurs: ");
+  //strcpy(data, "couleurs: ");
   
   //Formatter la chaîne
   char temp_string[numberofColors];
-  sprintf(temp_string, "%d, ", numberofColors);
+  sprintf(temp_string, "%d,", numberofColors);
 
   if (cc->size < numberofColors && numberofColors < 30)
   {
@@ -269,7 +296,7 @@ void analyse(char *pathname, char *data, int numberofColors)
 int envoie_images(int socketfd, char *pathname, int numberofColors)
 {
   char data[1024];
-    memset(data, 0, sizeof(data));
+  memset(data, 0, sizeof(data));
 
   analyse(pathname, data, numberofColors);
 

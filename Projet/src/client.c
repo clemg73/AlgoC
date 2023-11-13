@@ -16,20 +16,17 @@
 #include "client.h"
 #include "bmp.h"
 
-char* parser(char *code,char *data){
+char* serializator(char *code,char *data){
   char *message = malloc(1024);
 
   char *del1 = " ";
   char *del2 = ",";
-  //char *del3 = "#";
   
   snprintf(message, 1024, "{\"code\":\"%s\",\"valeurs\":[",code);
 
-  puts(data);
   if(strcmp(code, "images") == 0){
 
     char *imgToken = strtok(data, del2);
-    //char *numberofColorsToken = strtok(imgToken, del3);   
 
     while (imgToken != 0)
     {
@@ -78,7 +75,7 @@ int envoie_nom_de_client(int socketfd){
     perror("hostname");
     exit(EXIT_FAILURE);
   }
-  char *data = parser("nom",name);
+  char *data = serializator("nom",name);
 
   int write_status = write(socketfd, data, strlen(data));
 
@@ -125,7 +122,7 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
     strcat(operation, " ");
     strcat(operation, nombre2);
 
-    char *data = parser("calcul",operation);
+    char *data = serializator("calcul",operation);
     int write_status = write(socketfd, data, strlen(data));
     if (write_status < 0)
     {
@@ -159,7 +156,7 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
       strcat(colors, " ");
   }
 
-  char *data = parser("color",colors);
+  char *data = serializator("color",colors);
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -194,7 +191,7 @@ int envoie_balise(int socketfd, char *myList[], int len){
       strcat(colors, " ");
   }
 
-  char *data = parser("balises",colors);
+  char *data = serializator("balises",colors);
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -232,7 +229,7 @@ int envoie_recois_message(int socketfd)
 
   fgets(message, sizeof(message), stdin);
 
-  char *data = parser("message",message);
+  char *data = serializator("message",message);
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -301,7 +298,7 @@ int envoie_images(int socketfd, char *pathname, int numberofColors)
   analyse(pathname, data, numberofColors);
 
 
-  char *temp = parser("images",data);
+  char *temp = serializator("images",data);
 
   int write_status = write(socketfd, temp, strlen(temp));
   if (write_status < 0)

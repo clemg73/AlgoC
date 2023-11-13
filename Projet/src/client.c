@@ -23,8 +23,13 @@ char* parser(char *code,char *data){
   snprintf(message, 1024, "{\"code\":\"%s\",\"valeurs\":[",code);
   while (token != 0)
   {
-
+    
     strcat(message, "\"");
+    
+    if(strcmp(code, "color") == 0|| strcmp(code, "balises")==0){
+      strcat(message, "#");
+    }
+
     strcat(message, token);
     strcat(message, "\",");
 
@@ -33,6 +38,7 @@ char* parser(char *code,char *data){
   }
   
   strcat(message, "]}");
+
   return message;
 }
 
@@ -46,6 +52,7 @@ int envoie_nom_de_client(int socketfd){
     exit(EXIT_FAILURE);
   }
   char *data = parser("nom",name);
+
   int write_status = write(socketfd, data, strlen(data));
 
   if (write_status < 0)
@@ -77,7 +84,7 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
     printf("Nombre 1: %lf\n", nb1);
     printf("Nombre 2: %lf\n", nb2);
 
-    char operation[1024] = ". ";
+    char operation[1024] = "";
 
     char nombre1[15] = {0};
     sprintf(nombre1, "%.2lf", nb1);
@@ -153,7 +160,7 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
 int envoie_balise(int socketfd, char *myList[], int len){
   
   int compteur;
-  char colors[1024] = ". ";
+  char colors[1024] = "";
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
       strcat(colors, myList[compteur]);

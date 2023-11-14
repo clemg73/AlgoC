@@ -15,10 +15,10 @@
 typedef struct  {
     char *code;
     char **valeurs;
-    int nb;
 } JsonObject;
 
 JsonObject parser(const char*);
+char* serializator(char*,char*);
 
 
 #endif

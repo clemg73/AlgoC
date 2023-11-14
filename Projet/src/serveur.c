@@ -181,30 +181,89 @@ int renvoie_balise(int client_socket_fd, char **balises){
 }
 
 
-int recois_numeros_calcule(int client_socket_fd, char **words)
+int recois_numeros_calcule(int client_socket_fd, char **words, int nb)
 {
-  double number1;
-  double number2;
-  number1 = strtod(words[1], NULL);
-  number2 = strtod(words[2], NULL);
+ 
   double result;
   
+  
+  if(strcmp(words[0],"+")==0 || strcmp(words[0],"-")==0 || strcmp(words[0],"x")==0 || strcmp(words[0],"/")==0)
+  {
+    double number1;
+    double number2;
+    number1 = strtod(words[1], NULL);
+    number2 = strtod(words[2], NULL);
+    if(strcmp(words[0],"+")==0)
+    {
+      result = number1+number2;
+    }
+    else if(strcmp(words[0],"-")==0)
+    {
+      result = number1-number2;
+    }
+    else  if(strcmp(words[0],"x")==0)
+    {
+      result = number1*number2;
+    }
+    else  if(strcmp(words[0],"/")==0)
+    {
+      result = number1/number2;
+    }
+  }else if(strcmp(words[0],"avg")==0 || strcmp(words[0],"min")==0 || strcmp(words[0],"max")==0 || strcmp(words[0],"e-t")==0)
+  {
+    if(strcmp(words[0],"avg")==0)
+    {
+      result = 0;
+      
+      for (int compteur = 1 ; compteur <  nb; compteur++)
+      {
+        result += strtod(words[compteur], NULL);
+      };
+      result = result/(nb-1);
+    }
+    else if(strcmp(words[0],"min")==0)
+    {
+      result = strtod(words[1], NULL);
+      printf("%f\n",result);
+      for (int compteur = 2 ; compteur <  nb; compteur++)
+      {
+        if(strtod(words[compteur], NULL) < result)
+        {
+          result = strtod(words[compteur], NULL);
+        }
+      };
+    }
+    else  if(strcmp(words[0],"max")==0)
+    {
+      result = strtod(words[1], NULL);
+      
+      for (int compteur = 2 ; compteur <  nb; compteur++)
+      {
+        if(strtod(words[compteur], NULL) > result)
+        {
+          result = strtod(words[compteur], NULL);
+        }
+      };
+    }
+    else  if(strcmp(words[0],"e-t")==0)
+    {
+      double avg = 0;
+      for (int j = 1; j <  nb; j++)
+      {
+        avg += strtod(words[j], NULL);
+      };
+      avg = avg/(nb-1);
+      printf("%f\n",avg);
+      double sommeCarresEcarts = 0.0;
+      for (int i = 1; i < nb; i++) {
+        double ecart = strtod(words[i], NULL) - avg;
+        sommeCarresEcarts += ecart * ecart;
+      }
+      double variance = sommeCarresEcarts / (nb-1);
+            
 
-  if(strcmp(words[0],"+")==0)
-  {
-    result = number1+number2;
-  }
-  else if(strcmp(words[0],"-")==0)
-  {
-    result = number1-number2;
-  }
-  else  if(strcmp(words[0],"x")==0)
-  {
-    result = number1*number2;
-  }
-  else  if(strcmp(words[0],"/")==0)
-  {
-    result = number1/number2;
+      result = sqrt(variance);
+    }
   }
 
   char res[15] = {0};
@@ -277,7 +336,7 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
   else if (strcmp(object.code,"calcul")==0)
   {
     free(object.code);
-    recois_numeros_calcule(client_socket_fd, object.valeurs);
+    recois_numeros_calcule(client_socket_fd, object.valeurs,object.nb);
   }
   return (EXIT_SUCCESS);
 }

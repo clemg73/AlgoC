@@ -30,7 +30,7 @@ JsonObject parser(const char *data) {
     int wordCount = 0;
 
     JsonObject object;
-
+    object.nb = 0;
     while (ptr != NULL) {
       //Si on détecte un " alors on supprime le premier et dernier caractère
       if(ptr[0]=='"')
@@ -42,6 +42,7 @@ JsonObject parser(const char *data) {
       }
       words[wordCount] = ptr;
       wordCount++;
+      object.nb++;
       ptr = strtok(NULL, delim);
     }
     object.code = code;

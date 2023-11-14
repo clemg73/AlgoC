@@ -14,57 +14,8 @@
 #include <netinet/in.h>
 
 #include "client.h"
+#include "json.h"
 #include "bmp.h"
-
-char* serializator(char *code,char *data){
-  char *message = malloc(1024);
-
-  char *del1 = " ";
-  char *del2 = ",";
-  
-  snprintf(message, 1024, "{\"code\":\"%s\",\"valeurs\":[",code);
-
-  if(strcmp(code, "images") == 0){
-
-    char *imgToken = strtok(data, del2);
-
-    while (imgToken != 0)
-    {
-
-      strcat(message, "\"");
-      strcat(message, imgToken);
-      strcat(message, "\",");     
-      imgToken = strtok(NULL, del2);
-      
-    }
-  }
-  else{
-  
-    char *token = strtok(data, del1);
-
-    while (token != 0)
-    {
-
-      strcat(message, "\"");
-    
-      if(strcmp(code, "color") == 0|| strcmp(code, "balises")==0){
-        strcat(message, "#");
-      }
-
-      strcat(message, token);
-      strcat(message, "\",");
-      
-      token = strtok(NULL, del1);
-      
-    }
-  }
-  
-  strcat(message, "]}");
-
-  printf("%s\n", message);
-
-  return message;
-}
 
 int envoie_nom_de_client(int socketfd){
 
@@ -89,14 +40,15 @@ int envoie_nom_de_client(int socketfd){
   memset(data, 0, strlen(data));
 
   // lire les données de la socket
-  int read_status = read(socketfd, data, sizeof(data));
+  int read_status = read(socketfd, data, 1024);
   if (read_status < 0)
   {
     perror("erreur lecture");
     return -1;
   }
 
-  printf("Nom reçu: %s\n", data);
+  JsonObject object = parser(data);
+  printf("Réponse nom: %s\n", *object.valeurs);
   free(data);
   return 0;
 }
@@ -134,14 +86,14 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
     memset(data, 0, strlen(data));
 
     // lire les données de la socket
-    int read_status = read(socketfd, data, sizeof(data));
+    int read_status = read(socketfd, data, 1024);
     if (read_status < 0)
     {
       perror("erreur lecture");
       return -1;
     }
-
-    printf("Resulat du calcul reçu: %s\n", data);
+    JsonObject object = parser(data);
+    printf("Réponse calcul: %s\n", *object.valeurs);
     free(data);
     return 0;
 
@@ -150,6 +102,7 @@ int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double n
 int envoie_couleurs(int socketfd, char *myList[], int len){
   int compteur;
   char colors[1024]="";
+  sprintf(colors, "%d ", len);
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
       strcat(colors, myList[compteur]);
@@ -168,14 +121,15 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
   memset(data, 0, strlen(data));
 
   // lire les données de la socket
-  int read_status = read(socketfd, data, sizeof(data));
+  int read_status = read(socketfd, data, 1024);
   if (read_status < 0)
   {
     perror("erreur lecture");
     return -1;
   }
 
-  printf("Couleurs: %s\n", data);
+  JsonObject object = parser(data);
+  printf("Réponse couleurs: %s\n", *object.valeurs);
   free(data);
   return 0;
 }
@@ -184,14 +138,15 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
 int envoie_balise(int socketfd, char *myList[], int len){
   
   int compteur;
-  char colors[1024] = "";
+  char balises[1024] = "";
+  sprintf(balises, "%d ", len);
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
-      strcat(colors, myList[compteur]);
-      strcat(colors, " ");
+      strcat(balises, myList[compteur]);
+      strcat(balises, " ");
   }
 
-  char *data = serializator("balises",colors);
+  char *data = serializator("balises",balises);
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -203,14 +158,14 @@ int envoie_balise(int socketfd, char *myList[], int len){
   memset(data, 0, strlen(data));
 
   // lire les données de la socket
-  int read_status = read(socketfd, data, sizeof(data));
+  int read_status = read(socketfd, data, 1024);
   if (read_status < 0)
   {
     perror("erreur lecture");
     return -1;
   }
-  
-  printf("Balises: %s\n", data);
+  JsonObject object = parser(data);
+  printf("Réponse balises: %s\n", *object.valeurs);
   free(data);
   return 0;
 }
@@ -228,8 +183,9 @@ int envoie_recois_message(int socketfd)
   printf("Votre message (max 1000 caracteres): ");
 
   fgets(message, sizeof(message), stdin);
-
+  message[strlen(message) - 1] = '\0';
   char *data = serializator("message",message);
+  
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -241,14 +197,14 @@ int envoie_recois_message(int socketfd)
   memset(data, 0, strlen(data));
 
   // lire les données de la socket
-  int read_status = read(socketfd, data, sizeof(data));
+  int read_status = read(socketfd, data, 1024);
   if (read_status < 0)
   {
     perror("erreur lecture");
     return -1;
   }
-
-  printf("Message recu: %s\n", data);
+  JsonObject object = parser(data);
+  printf("Réponse message: %s\n", *object.valeurs);
   free(data);
   return 0;
 }
@@ -296,8 +252,6 @@ int envoie_images(int socketfd, char *pathname, int numberofColors)
   memset(data, 0, sizeof(data));
 
   analyse(pathname, data, numberofColors);
-
-
   char *temp = serializator("images",data);
 
   int write_status = write(socketfd, temp, strlen(temp));

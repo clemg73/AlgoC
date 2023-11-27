@@ -54,25 +54,15 @@ int envoie_nom_de_client(int socketfd){
 }
 
 
-int envoie_operateur_numeros(int socketfd, char *operateur, double nb1, double nb2)
+int envoie_operateur_numeros(int socketfd, char* myList[], int nb)
 {
-    printf("Calcul opération: %s\n", operateur);
-    printf("Nombre 1: %lf\n", nb1);
-    printf("Nombre 2: %lf\n", nb2);
-
     char operation[1024] = "";
-
-    char nombre1[15] = {0};
-    sprintf(nombre1, "%.2lf", nb1);
-
-    char nombre2[15] = {0};
-    sprintf(nombre2, "%.2lf", nb2);
-
-    strcat(operation, operateur);
-    strcat(operation, " ");
-    strcat(operation, nombre1);
-    strcat(operation, " ");
-    strcat(operation, nombre2);
+    int compteur;
+    for (compteur = 0 ; compteur <  nb; compteur++)
+    {
+      strcat(operation, myList[compteur]);
+      strcat(operation, " ");
+    }
 
     char *data = serializator("calcul",operation);
     int write_status = write(socketfd, data, strlen(data));
@@ -312,7 +302,13 @@ int main(int argc, char **argv)
     envoie_recois_message(socketfd);
   }else if (strcmp(argv[1],"-calcul") == 0)
   {
-    envoie_operateur_numeros(socketfd,argv[2],atof(argv[3]),atof(argv[4]));
+    char* myList[argc-2];
+    int compteur;
+    for (compteur = 0 ; compteur <  argc; compteur++)
+    {
+      myList[compteur] = argv[compteur+2];
+    }
+    envoie_operateur_numeros(socketfd,myList,argc-2);
   }else if (strcmp(argv[1],"-color") == 0)
   {
     char *myList[atoi(argv[2])];

@@ -329,5 +329,5 @@ int main(int argc, char **argv)
     envoie_balise(socketfd,myList,atoi(argv[2]));
   }
 
-  close(socketfd);
+  //close(socketfd);
 }

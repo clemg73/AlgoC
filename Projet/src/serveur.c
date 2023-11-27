@@ -305,6 +305,8 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
    * extraire le code des données envoyées par le client.
    * Les données envoyées par le client peuvent commencer par le mot "message :" ou un autre mot.
    */
+  printf("data: %s\n", data);
+
   JsonObject object = parser(data);
 
   // Si le message commence par le mot: 'message:'
@@ -354,7 +356,6 @@ void gestionnaire_ctrl_c(int signal)
 int main()
 {
   int bind_status;
-
   struct sockaddr_in server_addr;
 
   /*
@@ -387,41 +388,70 @@ int main()
   // Enregistrez la fonction de gestion du signal Ctrl+C
   signal(SIGINT, gestionnaire_ctrl_c);
 
+
+
+  int clientSockets[3] = {socketfd};
+  fd_set readfds;
+
+  int nbSocket = 0;
   // Écouter les messages envoyés par le client en boucle infinie
   while (1)
   {
-    // Écouter les messages envoyés par le client
     listen(socketfd, 10);
 
-    // Lire et répondre au client
+    FD_ZERO(&readfds);
+    FD_SET(socketfd, &readfds);
+    int maxSocket = socketfd;
+    for (int i = 0; i < 3; ++i) {
+        int clientSocket = clientSockets[i];
+        if (clientSocket > 0) {
+            FD_SET(clientSocket, &readfds);
+        }
+        if (clientSocket > maxSocket) {
+            maxSocket = clientSocket;
+        }
+    }
+    select(maxSocket + 1, &readfds, NULL, NULL, NULL);
+
     struct sockaddr_in client_addr;
-    char data[1024];
-
     unsigned int client_addr_len = sizeof(client_addr);
+    int client_socket_fd;
 
-    // nouvelle connection de client
-    int client_socket_fd = accept(socketfd, (struct sockaddr *)&client_addr, &client_addr_len);
-    if (client_socket_fd < 0)
+    if(FD_ISSET(socketfd,&readfds))
     {
-      perror("accept");
-      return (EXIT_FAILURE);
-    }
+      int newSocket = accept(socketfd, (struct sockaddr *)&client_addr, &client_addr_len);
+      nbSocket++;
+      clientSockets[nbSocket] = newSocket;
+      client_socket_fd = newSocket;
+    }else{
+      for (int i = 1; i < 3; i++) {
+        int clientSocket = clientSockets[i];
+        if(FD_ISSET(clientSocket,&readfds))
+        {
+          client_socket_fd = clientSocket;
+        }
+      }
+      char data[1024];
+      // la réinitialisation de l'ensemble des données
+      memset(data, 0, sizeof(data));
 
-    // la réinitialisation de l'ensemble des données
-    memset(data, 0, sizeof(data));
+      // lecture de données envoyées par un client
+      int data_size = read(client_socket_fd, (void *)data, sizeof(data));
 
-    // lecture de données envoyées par un client
-    int data_size = read(client_socket_fd, (void *)data, sizeof(data));
+      if (data_size < 0)
+      {
+        perror("erreur lecture");
+        return (EXIT_FAILURE);
+      }else if(data_size == 0)
+      {
+        //TODO
+      }else{
+        recois_envoie_message(client_socket_fd, data);
+      }
 
-    if (data_size < 0)
-    {
-      perror("erreur lecture");
-      return (EXIT_FAILURE);
-    }
 
-    recois_envoie_message(client_socket_fd, data);
+    }   
   }
 
   return 0;
 }
-

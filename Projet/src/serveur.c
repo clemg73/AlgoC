@@ -353,6 +353,9 @@ void gestionnaire_ctrl_c(int signal)
 int main()
 {
 
+  for (int i = 0; i < MAXCLIENTS; i++) {
+    clientSockets[i] = &procSocket;
+  }
 
   int bind_status;
 

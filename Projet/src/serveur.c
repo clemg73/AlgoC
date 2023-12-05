@@ -15,7 +15,6 @@
 #include <string.h>
 #include <unistd.h>
 #include "json.h"
-#include "validateur.h"
 #include "serveur.h"
 int socketfd;
 

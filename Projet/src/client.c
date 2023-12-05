@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
+#include "validateur.h"
 #include "client.h"
 #include "json.h"
 #include "bmp.h"
@@ -62,7 +62,12 @@ int envoie_nom_de_client(int socketfd){
     perror("hostname");
     exit(EXIT_FAILURE);
   }
+
   char *data = serializator("nom",name);
+  if(quotesChecking(data) != 0){
+    perror("erreur de format");
+    exit(EXIT_FAILURE);
+  }
 
   int write_status = write(socketfd, data, strlen(data));
 
@@ -101,6 +106,11 @@ int envoie_operateur_numeros(int socketfd, char* myList[], int nb)
     }
 
     char *data = serializator("calcul",operation);
+    if(operationChecking(data) != 0){
+      perror("erreur de format");
+      exit(EXIT_FAILURE);
+    }
+
     int write_status = write(socketfd, data, strlen(data));
     if (write_status < 0)
     {
@@ -136,6 +146,11 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
   }
 
   char *data = serializator("color",colors);
+  if(colorChecking(data) != 0){
+    perror("erreur de format");
+    exit(EXIT_FAILURE);
+  }
+
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
@@ -351,22 +366,27 @@ int main(int argc, char **argv)
     envoie_operateur_numeros(socketfd,myList,argc-2);
   }else if (strcmp(argv[1],"-color") == 0)
   {
-    char *myList[atoi(argv[2])];
+    char *myList[1024];
     int compteur;
-    for (compteur = 0 ; compteur <=  atoi(argv[2]); compteur++)
+    myList[0] = argv[2];
+    for (compteur = 1 ; compteur <=  atoi(argv[2]); compteur++)
     {
-        myList[compteur] = argv[compteur+3];
+        myList[compteur] = argv[compteur+2];
     }
-    envoie_couleurs(socketfd,myList,atoi(argv[2]));
+    envoie_couleurs(socketfd,myList,atoi(argv[2])+1);
   }else if (strcmp(argv[1],"-balises") == 0)
   {
-    char *myList[atoi(argv[2])];
+    char *myList[1024];
     int compteur;
-    for (compteur = 0 ; compteur <=  atoi(argv[2]); compteur++)
+    int valmax;
+    myList[0] = argv[2];
+    for (compteur = 1 ; compteur <=  atoi(argv[2]); compteur++)
     {
-      myList[compteur] = argv[compteur+3];
+      valmax = compteur+2;
+      myList[compteur] = argv[valmax];
+
     }
-    envoie_balise(socketfd,myList,atoi(argv[2]));
+    envoie_balise(socketfd,myList,valmax);
   }
   while(1){}
   //close(socketfd);

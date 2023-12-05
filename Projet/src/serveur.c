@@ -45,7 +45,7 @@ double degreesToRadians(double degrees)
   return degrees * M_PI / 180.0;
 }
 
-int plot(char **data, int nb)
+int plot(char **data)
 {
   int numberofColors = atoi(data[0]);
 
@@ -71,7 +71,7 @@ int plot(char **data, int nb)
 
   double start_angle = -90.0;
 
-  for (int i = 1; i < nb; i++)
+  for (int i = 1; i < numberofColors; i++)
   {
    
     angles[i] = 360.0 / numberofColors;
@@ -104,7 +104,9 @@ int plot(char **data, int nb)
  */
 int renvoie_message(int client_socket_fd, char **data)
 {
-  int data_size = write(client_socket_fd, (void *)data[0], strnlen(data[0], 1024));
+  char *data_send = serializator("message",data[0]);
+
+  int data_size = write(client_socket_fd, (void *)data_send, strnlen(data_send, 1024));
   free(data);
   if (data_size < 0)
   {
@@ -116,7 +118,9 @@ int renvoie_message(int client_socket_fd, char **data)
 
 int renvoie_nom(int client_socket_fd, char **data)
 {
-  int data_size = write(client_socket_fd, (void *)data[0], strnlen(data[0], 1024));
+  char *data_send = serializator("nom",data[0]);
+
+  int data_size = write(client_socket_fd, (void *)data_send, strnlen(data_send, 1024));
   free(data);
   if (data_size < 0)
   {
@@ -126,22 +130,22 @@ int renvoie_nom(int client_socket_fd, char **data)
   return (EXIT_SUCCESS);
 }
 
-int renvoie_couleur(int client_socket_fd, char **data, int nb){
+int renvoie_couleur(int client_socket_fd, char **colors){
 
   FILE *fp;
   fp = fopen("colors.txt", "w");
 
-  for(int i = 0; i < nb; i++){
-    printf("écriture de couleur %i...: %s\n", i, data[i]);
-    fprintf(fp, "%s\n",data[i]);
+  for(int i = 1; i <= atoi(colors[0]); i++){
+    printf("écriture de couleur %i...: %s\n", i, colors[i]);
+    fprintf(fp, "%s\n",colors[i]);
   }
   fclose(fp);
 
-  free(data[0]);
-  free(data);
+  free(colors[0]);
+  free(colors);
 
-  char newData[] = "enregistrees";
-  int data_size = write(client_socket_fd, (void *)newData, strnlen(newData, 1024));
+  char *data = serializator("color","enregistré");
+  int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
 
   if (data_size < 0)
   {
@@ -151,13 +155,12 @@ int renvoie_couleur(int client_socket_fd, char **data, int nb){
   return (EXIT_SUCCESS);
 }
 
-int renvoie_balise(int client_socket_fd, char **balises, int nb){
+int renvoie_balise(int client_socket_fd, char **balises){
 
 
   FILE *fp;
   fp = fopen("balises.txt", "w");
-
-  for(int i = 0; i < nb; i++){
+  for(int i = 1; i <= atoi(balises[0]); i++){
     printf("écriture de balise %i... %s\n", i, balises[i]);
     fprintf(fp, "%s\n", balises[i]);
   }
@@ -166,8 +169,8 @@ int renvoie_balise(int client_socket_fd, char **balises, int nb){
   free(balises[0]);
   free(balises);
 
-  char newData[] = "enregistrees";
-  int data_size = write(client_socket_fd, (void *)newData, strnlen(newData, 1024));
+  char *data = serializator("balises","enregistré");
+  int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
 
   if (data_size < 0)
   {
@@ -178,34 +181,96 @@ int renvoie_balise(int client_socket_fd, char **balises, int nb){
 }
 
 
-int recois_numeros_calcule(int client_socket_fd, char **words)
+int recois_numeros_calcule(int client_socket_fd, char **words, int nb)
 {
-  double number1;
-  double number2;
-  number1 = strtod(words[1], NULL);
-  number2 = strtod(words[2], NULL);
+ 
   double result;
   
+  
+  if(strcmp(words[0],"+")==0 || strcmp(words[0],"-")==0 || strcmp(words[0],"x")==0 || strcmp(words[0],"/")==0)
+  {
+    double number1;
+    double number2;
+    number1 = strtod(words[1], NULL);
+    number2 = strtod(words[2], NULL);
+    if(strcmp(words[0],"+")==0)
+    {
+      result = number1+number2;
+    }
+    else if(strcmp(words[0],"-")==0)
+    {
+      result = number1-number2;
+    }
+    else  if(strcmp(words[0],"x")==0)
+    {
+      result = number1*number2;
+    }
+    else  if(strcmp(words[0],"/")==0)
+    {
+      result = number1/number2;
+    }
+  }else if(strcmp(words[0],"avg")==0 || strcmp(words[0],"min")==0 || strcmp(words[0],"max")==0 || strcmp(words[0],"e-t")==0)
+  {
+    if(strcmp(words[0],"avg")==0)
+    {
+      result = 0;
+      
+      for (int compteur = 1 ; compteur <  nb; compteur++)
+      {
+        result += strtod(words[compteur], NULL);
+      };
+      result = result/(nb-1);
+    }
+    else if(strcmp(words[0],"min")==0)
+    {
+      result = strtod(words[1], NULL);
+      printf("%f\n",result);
+      for (int compteur = 2 ; compteur <  nb; compteur++)
+      {
+        if(strtod(words[compteur], NULL) < result)
+        {
+          result = strtod(words[compteur], NULL);
+        }
+      };
+    }
+    else  if(strcmp(words[0],"max")==0)
+    {
+      result = strtod(words[1], NULL);
+      
+      for (int compteur = 2 ; compteur <  nb; compteur++)
+      {
+        if(strtod(words[compteur], NULL) > result)
+        {
+          result = strtod(words[compteur], NULL);
+        }
+      };
+    }
+    else  if(strcmp(words[0],"e-t")==0)
+    {
+      double avg = 0;
+      for (int j = 1; j <  nb; j++)
+      {
+        avg += strtod(words[j], NULL);
+      };
+      avg = avg/(nb-1);
+      printf("%f\n",avg);
+      double sommeCarresEcarts = 0.0;
+      for (int i = 1; i < nb; i++) {
+        double ecart = strtod(words[i], NULL) - avg;
+        sommeCarresEcarts += ecart * ecart;
+      }
+      double variance = sommeCarresEcarts / (nb-1);
+            
 
-  if(strcmp(words[0],"+")==0)
-  {
-    result = number1+number2;
+      result = sqrt(variance);
+    }
   }
-  else if(strcmp(words[0],"-")==0)
-  {
-    result = number1-number2;
-  }
-  else  if(strcmp(words[0],"x")==0)
-  {
-    result = number1*number2;
-  }
-  else  if(strcmp(words[0],"/")==0)
-  {
-    result = number1/number2;
-  }
+
   char res[15] = {0};
   sprintf(res, "%.2lf", result);
-  int data_size = write(client_socket_fd, (void *)res, strnlen(res, 1024));
+  char *data = serializator("calcul",res);
+  int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
+
   free(words);
   if (data_size < 0)
   {
@@ -240,7 +305,6 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
    * extraire le code des données envoyées par le client.
    * Les données envoyées par le client peuvent commencer par le mot "message :" ou un autre mot.
    */
-//"{\"code\":\"calcul\",\"valeurs\":[\"+\",\"2.00\",\"3.00\"]}"
   JsonObject object = parser(data);
 
   // Si le message commence par le mot: 'message:'
@@ -257,22 +321,22 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
   else if (strcmp(object.code,"images")==0)
   {
     free(object.code);
-    plot(object.valeurs,object.nb);
+    plot(object.valeurs);
   }
   else if (strcmp(object.code,"color")==0)
   {   
     free(object.code);
-    renvoie_couleur(client_socket_fd, object.valeurs,object.nb);
+    renvoie_couleur(client_socket_fd, object.valeurs);
   }
   else if (strcmp(object.code,"balises")==0)
   {
     free(object.code);
-    renvoie_balise(client_socket_fd, object.valeurs,object.nb);
+    renvoie_balise(client_socket_fd, object.valeurs);
   }
   else if (strcmp(object.code,"calcul")==0)
   {
     free(object.code);
-    recois_numeros_calcule(client_socket_fd, object.valeurs);
+    recois_numeros_calcule(client_socket_fd, object.valeurs,object.nb);
   }
   return (EXIT_SUCCESS);
 }

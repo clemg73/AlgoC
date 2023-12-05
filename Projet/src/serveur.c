@@ -353,11 +353,6 @@ void gestionnaire_ctrl_c(int signal)
 int main()
 {
 
-  //char txt[] = "{\"code\":\"balises\",\"valeurs\":[\"10\",\"#abcd25\",\"#123425\"]}";
-  //baliseChecking(txt);
-
-  //char txt[] = "{\"code\":\"calcul\",\"valeurs\":[\"+\",\"3.00\",\"2.00\"]}";
-  //operationChecking(txt);
 
   int bind_status;
 

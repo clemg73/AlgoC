@@ -21,6 +21,10 @@ typedef struct  {
 JsonObject parser(const char*);
 char* serializator(char*,char*);
 
+typedef struct  {
+    char *name;
+    int socket;
+} SocketObject;
 
 
 #endif

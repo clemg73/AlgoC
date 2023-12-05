@@ -15,9 +15,13 @@
 #include <string.h>
 #include <unistd.h>
 #include "json.h"
-
 #include "serveur.h"
+
+#define MAXCLIENTS 3
+
 int socketfd;
+SocketObject procSocket = {"rien",0};
+SocketObject* clientSockets[MAXCLIENTS];
 
 int visualize_plot()
 {
@@ -133,7 +137,25 @@ int renvoie_nom(int client_socket_fd, char **data)
 int renvoie_couleur(int client_socket_fd, char **colors){
 
   FILE *fp;
-  fp = fopen("colors.txt", "w");
+  char file[1024] = "colors_";
+  char str[10];
+
+  for (int i = 0; i < MAXCLIENTS; i++) {
+
+    if (clientSockets[i]->socket == client_socket_fd) {
+
+        strcat(file, clientSockets[i]->name);
+
+        strcat(file, "_");
+        sprintf(str, "%d", clientSockets[i]->socket);
+        strcat(file, str);
+        strcat(file, ".txt");
+
+        break;
+    }
+  }
+
+  fp = fopen(file, "w");
 
   for(int i = 1; i <= atoi(colors[0]); i++){
     printf("écriture de couleur %i...: %s\n", i, colors[i]);
@@ -141,11 +163,17 @@ int renvoie_couleur(int client_socket_fd, char **colors){
   }
   fclose(fp);
 
+  printf("ee\n");
+
   free(colors[0]);
   free(colors);
 
+  printf("ee\n");
+
   char *data = serializator("color","enregistré");
   int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
+
+  printf("ee\n");
 
   if (data_size < 0)
   {
@@ -157,20 +185,41 @@ int renvoie_couleur(int client_socket_fd, char **colors){
 
 int renvoie_balise(int client_socket_fd, char **balises){
 
-
   FILE *fp;
-  fp = fopen("balises.txt", "w");
+  char file[1024] = "balises_";
+  char str[10];
+
+  for (int i = 0; i < MAXCLIENTS; i++) {
+
+    if (clientSockets[i]->socket == client_socket_fd) {
+
+        strcat(file, clientSockets[i]->name);
+
+        strcat(file, "_");
+        sprintf(str, "%d", clientSockets[i]->socket);
+        strcat(file, str);
+        strcat(file, ".txt");
+
+        break;
+    }
+  }
+
+  fp = fopen(file, "w");
+
   for(int i = 1; i <= atoi(balises[0]); i++){
-    printf("écriture de balise %i... %s\n", i, balises[i]);
-    fprintf(fp, "%s\n", balises[i]);
+    printf("écriture de balises %i...: %s\n", i, balises[i]);
+    fprintf(fp, "%s\n",balises[i]);
   }
   fclose(fp);
+
 
   free(balises[0]);
   free(balises);
 
+
   char *data = serializator("balises","enregistré");
   int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
+
 
   if (data_size < 0)
   {
@@ -208,6 +257,8 @@ int recois_numeros_calcule(int client_socket_fd, char **words, int nb)
     else  if(strcmp(words[0],"/")==0)
     {
       result = number1/number2;
+    }else{
+      result = 0;
     }
   }else if(strcmp(words[0],"avg")==0 || strcmp(words[0],"min")==0 || strcmp(words[0],"max")==0 || strcmp(words[0],"e-t")==0)
   {
@@ -263,7 +314,11 @@ int recois_numeros_calcule(int client_socket_fd, char **words, int nb)
             
 
       result = sqrt(variance);
+    }else{
+      result = 0;
     }
+  }else{
+    result = 0;
   }
 
   char res[15] = {0};
@@ -339,6 +394,15 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
   {
     free(object.code);
     recois_numeros_calcule(client_socket_fd, object.valeurs,object.nb);
+  }else if (strcmp(object.code,"machine")==0)
+  {
+    free(object.code);
+    for (int i = 0; i < MAXCLIENTS; i++) {
+        if (clientSockets[i]->socket == client_socket_fd) {
+            clientSockets[i]->name = object.valeurs[0];
+            break; // Sortir de la boucle une fois que le premier zéro est trouvé
+        }
+    };
   }
   return (EXIT_SUCCESS);
 }
@@ -353,8 +417,35 @@ void gestionnaire_ctrl_c(int signal)
   exit(0); // Quitter proprement le programme.
 }
 
+void split_requests( char *data, const char *delimiter, char ***requests, int *num_requests) {
+    char *copy = strdup(data);  // Faites une copie de la chaîne originale
+    char *token = strtok(copy, delimiter);
+    *num_requests = 0;
+
+    // Comptez le nombre de requêtes
+    while (token != NULL) {
+        (*num_requests)++;
+        token = strtok(NULL, delimiter);
+    }
+
+    // Allouez de la mémoire pour le tableau de requêtes
+    *requests = (char **)malloc(sizeof(char *) * (*num_requests));
+
+    // Remplissez le tableau de requêtes
+    token = strtok(data, delimiter);
+    for (int i = 0; i < *num_requests; i++) {
+        (*requests)[i] = strdup(token);
+        token = strtok(NULL, delimiter);
+    }
+
+    free(copy);  // Libérez la mémoire de la copie temporaire
+}
+
 int main()
 {
+  for (int i = 0; i < MAXCLIENTS; i++) {
+    clientSockets[i] = &procSocket;
+  }
   int bind_status;
   struct sockaddr_in server_addr;
 
@@ -384,16 +475,15 @@ int main()
     perror("bind");
     return (EXIT_FAILURE);
   }
-
   // Enregistrez la fonction de gestion du signal Ctrl+C
   signal(SIGINT, gestionnaire_ctrl_c);
 
-
-
-  int clientSockets[3] = {socketfd};
+  SocketObject so;
+  so.name = "truc de base";
+  so.socket = socketfd;
+  clientSockets[0] = &so;
   fd_set readfds;
 
-  int nbSocket = 0;
   // Écouter les messages envoyés par le client en boucle infinie
   while (1)
   {
@@ -402,8 +492,8 @@ int main()
     FD_ZERO(&readfds);
     FD_SET(socketfd, &readfds);
     int maxSocket = socketfd;
-    for (int i = 0; i < 3; ++i) {
-        int clientSocket = clientSockets[i];
+    for (int i = 0; i < MAXCLIENTS; ++i) {
+        int clientSocket = clientSockets[i]->socket;
         if (clientSocket > 0) {
             FD_SET(clientSocket, &readfds);
         }
@@ -412,7 +502,11 @@ int main()
         }
     }
     select(maxSocket + 1, &readfds, NULL, NULL, NULL);
-
+    printf("Sockets list before: ");
+    for (int i = 0; i < MAXCLIENTS; i++) {
+      printf("%d ", clientSockets[i]->socket);
+    }
+    printf("\n");
     struct sockaddr_in client_addr;
     unsigned int client_addr_len = sizeof(client_addr);
     int client_socket_fd;
@@ -420,38 +514,82 @@ int main()
     if(FD_ISSET(socketfd,&readfds))
     {
       int newSocket = accept(socketfd, (struct sockaddr *)&client_addr, &client_addr_len);
-      nbSocket++;
-      clientSockets[nbSocket] = newSocket;
-      client_socket_fd = newSocket;
+
+      int position = -1; // Initialisation à -1 pour le cas où le zéro n'est pas trouvé
+      for (int i = 0; i < MAXCLIENTS; i++) {
+          if (clientSockets[i]->socket == 0) {
+              position = i;
+              break; // Sortir de la boucle une fois que le premier zéro est trouvé
+          }
+      }
+     
+      if (position == -1) {
+          printf("Number of maximum clients exceed\n");
+      }else{
+        SocketObject ns;
+        ns.name="un nouveau";
+        ns.socket = newSocket;
+
+        clientSockets[position] = &ns;
+        printf("%d\n",clientSockets[position]->socket);
+
+        client_socket_fd = newSocket;
+        printf("Create new socket\n");
+      }
     }else{
-      for (int i = 1; i < 3; i++) {
-        int clientSocket = clientSockets[i];
+      for (int i = 1; i < MAXCLIENTS; i++) {
+        int clientSocket = clientSockets[i]->socket;
         if(FD_ISSET(clientSocket,&readfds))
         {
           client_socket_fd = clientSocket;
+
+          char data[1024];
+          // la réinitialisation de l'ensemble des données
+          memset(data, 0, sizeof(data));
+
+          // lecture de données envoyées par un client
+          int data_size = read(client_socket_fd, (void *)data, sizeof(data));
+          if (data_size < 0)
+          {
+            perror("erreur lecture");
+            return (EXIT_FAILURE);
+          }else if(data_size == 0)
+          {
+            printf("Close socket\n");
+            close(client_socket_fd);
+            clientSockets[i]->socket=0;
+            clientSockets[i]->name="rien";
+          }else{
+            char **requests;
+            int num_requests;
+            split_requests(data, "}{", &requests, &num_requests);
+
+            for (int i = 0; i < num_requests; i++) {
+              recois_envoie_message(client_socket_fd, requests[i]);
+              free(requests[i]);  // Libérez la mémoire de chaque requête
+            }
+
+            free(requests);  // Libérez la mémoire du tableau de requêtes
+
+          }
         }
       }
-      char data[1024];
-      // la réinitialisation de l'ensemble des données
-      memset(data, 0, sizeof(data));
-
-      // lecture de données envoyées par un client
-      int data_size = read(client_socket_fd, (void *)data, sizeof(data));
-
-      if (data_size < 0)
-      {
-        perror("erreur lecture");
-        return (EXIT_FAILURE);
-      }else if(data_size == 0)
-      {
-        //TODO
-      }else{
-        recois_envoie_message(client_socket_fd, data);
-      }
-
-
     }   
+    printf("Sockets list after: ");
+    for (int i = 0; i < MAXCLIENTS; i++) {
+      printf("\n%s --> %d", clientSockets[i]->name, clientSockets[i]->socket);
+    }
+    printf("\n--------------\n");
   }
 
   return 0;
 }
+
+/*
+Bonnnn
+le probleme c'est que quand on lance un client, ça envoie deux requetes mais ça ne passe pas 2 fois dans recois_envoie_message.
+Alors que quand on le stop et qu'on relance, oui...
+Après le système pour enregister les couleurs dans un fichier colors_nomMachine_socket.txt est mis en place mais pas testé !!
+Il faudra faire pareil pour les balises
+Et enfin les tests
+*/

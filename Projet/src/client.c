@@ -17,6 +17,42 @@
 #include "json.h"
 #include "bmp.h"
 
+int envoie_infos_machine(int socketfd){
+
+  char infos[1024];
+  int state = gethostname(infos, 1024);
+
+  if(state == -1){
+    perror("hostname");
+    exit(EXIT_FAILURE);
+  }
+  char *data = serializator("machine",infos);
+
+  int write_status = write(socketfd, data, strlen(data));
+
+  if (write_status < 0)
+  {
+    perror("erreur ecriture");
+    exit(EXIT_FAILURE);
+  }
+
+  // la réinitialisation de l'ensemble des données
+  memset(data, 0, strlen(data));
+
+  /*// lire les données de la socket
+  int read_status = read(socketfd, data, 1024);
+  if (read_status < 0)
+  {
+    perror("erreur lecture");
+    return -1;
+  }
+
+  JsonObject object = parser(data);
+  printf("Réponse nom: %s\n", *object.valeurs);*/
+  free(data);
+  return 0;
+}
+
 int envoie_nom_de_client(int socketfd){
 
   char name[1024];
@@ -291,6 +327,10 @@ int main(int argc, char **argv)
   }
 
 
+  envoie_infos_machine(socketfd);
+
+  
+
   if (strcmp(argv[1],"-nom") == 0)
   {
     envoie_nom_de_client(socketfd);
@@ -328,6 +368,6 @@ int main(int argc, char **argv)
     }
     envoie_balise(socketfd,myList,atoi(argv[2]));
   }
-
+  while(1){}
   //close(socketfd);
 }

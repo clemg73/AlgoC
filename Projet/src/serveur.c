@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "json.h"
-
+#include "validateur.h"
 #include "serveur.h"
 int socketfd;
 
@@ -289,6 +289,13 @@ void gestionnaire_ctrl_c(int signal)
 
 int main()
 {
+
+  //char txt[] = "{\"code\":\"balises\",\"valeurs\":[\"10\",\"#abcd25\",\"#123425\"]}";
+  //baliseChecking(txt);
+
+  //char txt[] = "{\"code\":\"calcul\",\"valeurs\":[\"+\",\"3.00\",\"2.00\"]}";
+  //operationChecking(txt);
+
   int bind_status;
 
   struct sockaddr_in server_addr;

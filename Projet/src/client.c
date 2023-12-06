@@ -138,7 +138,7 @@ int envoie_operateur_numeros(int socketfd, char* myList[], int nb)
 int envoie_couleurs(int socketfd, char *myList[], int len){
   int compteur;
   char colors[1024]="";
-  sprintf(colors, "%d ", len);
+  //sprintf(colors, "%d ", len);
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
       strcat(colors, myList[compteur]);
@@ -175,26 +175,29 @@ int envoie_couleurs(int socketfd, char *myList[], int len){
   return 0;
 }
 
-
+//TODOOOOO
 int envoie_balise(int socketfd, char *myList[], int len){
   
   int compteur;
-  char balises[1024] = "";
-  sprintf(balises, "%d ", len);
+  char balises[1024]="";
+  //sprintf(colors, "%d ", len);
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
       strcat(balises, myList[compteur]);
       strcat(balises, " ");
   }
-
+  printf("ee");
   char *data = serializator("balises",balises);
+  if(baliseChecking(data) != 0){
+    perror("erreur de format");
+    exit(EXIT_FAILURE);
+  }
   int write_status = write(socketfd, data, strlen(data));
   if (write_status < 0)
   {
     perror("erreur ecriture");
     exit(EXIT_FAILURE);
   }
-
   // la réinitialisation de l'ensemble des données
   memset(data, 0, strlen(data));
 
@@ -206,7 +209,7 @@ int envoie_balise(int socketfd, char *myList[], int len){
     return -1;
   }
   JsonObject object = parser(data);
-  printf("Réponse balises: %s\n", *object.valeurs);
+  printf("Réponse couleurs: %s\n", *object.valeurs);
   free(data);
   return 0;
 }
@@ -378,15 +381,12 @@ int main(int argc, char **argv)
   {
     char *myList[1024];
     int compteur;
-    int valmax;
     myList[0] = argv[2];
     for (compteur = 1 ; compteur <=  atoi(argv[2]); compteur++)
     {
-      valmax = compteur+2;
-      myList[compteur] = argv[valmax];
-
+        myList[compteur] = argv[compteur+2];
     }
-    envoie_balise(socketfd,myList,valmax);
+    envoie_balise(socketfd,myList,atoi(argv[2])+1);
   }
   while(1){}
   //close(socketfd);

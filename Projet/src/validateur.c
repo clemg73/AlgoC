@@ -252,61 +252,51 @@ int colorChecking(char* jsonStringify){
     if(isThisCode(jsonStringify, "color") == 0){
 
         char *params = getParams(jsonStringify);
-        char character;
-        int nbquotes = 0;
-        int arrayPos;
-        char args[32];
-        int numArg = 0;
+        //Supprimer le premier et dernier caractère ([])
+        int longueurP = strlen(params);
+        for (int i = 0; i < longueurP - 1; i++) {
+            params[i] = params[i + 1];
+        }
+        longueurP--;
+        params[longueurP - 1] = '\0';
+        // Split de la chaine avec la virgule comme délimiteur
+        char *token = strtok(params, ",");
+        char *elements[100];
+        int count = 0;
 
-        int nbColors; 
-
-
-        for(int i = 0; i< strlen(params); i++){
-
-            character = params[i];
-
-            if(character == '\"' && nbquotes%2 == 0){
-                nbquotes ++;
-                arrayPos = 0;
+        while (token != NULL) {
+            //Supprimer le premier et dernier caractère
+            int longueur = strlen(token);
+            for (int i = 0; i < longueur - 1; i++) {
+                token[i] = token[i + 1];
             }
-            else if(character == '\"' && nbquotes%2 != 0){
-                nbquotes ++;
+            longueur--;
+            token[longueur - 1] = '\0';
 
-                if(numArg == 0 && (!atoi(args) || atoi(args) < 1 || atoi(args) > 30)){
-                    puts("First argument must be a integer between 1 and 30");
-                    return(EXIT_FAILURE);
-                }
-                else if(numArg == 0){
-                    nbColors = atoi(args);
-                }
-                else{
-                    if(numArg > 0 && isABalise(args) != 0){
-                        puts("The second and more argument must begin by #");
-                        return(EXIT_FAILURE);
-                    }
-                    else if(numArg > 0 && strlen(args) != 7 ){
-                        puts("Not a hexadecimal color");
-                        return(EXIT_FAILURE);
-                    }
-                }
-
-                memset(args, 0, strlen(args));
-                numArg++;
-            }
-
-            if(nbquotes%2 != 0 && character != '\"'){
-                args[arrayPos] = character;
-                arrayPos++;
-            }
+            // Stocker les éléments dans un tableau
+            elements[count++] = token;
+            token = strtok(NULL, ",");
         }
 
-        // -1 parce qu'on termine sur numArg++
-        if(nbColors != numArg-1){
-            puts("number of balises doesn't match");
+        // Vérification du nombre d'éléments dans la liste
+        if (count - 1 == atoi(elements[0])) {
+            printf("Le nombre d'elements dans la liste est egal au premier nombre.\n");
+
+            // Vérification pour chaque élément sauf le premier
+            for (int i = 1; i < count; i++) {
+                // Vérification de la longueur et du début avec #
+                if (strlen(elements[i]) == 7 && elements[i][0] == '#') {
+                    printf("L'element %d respecte les criteres.\n", i);
+                } else {
+                    printf("L'element %d ne respecte pas les criteres.\n", i);
+                    return(EXIT_FAILURE);
+                }
+            }
+        } else {
+            printf("Le nombre d'elements dans la liste n'est pas egal au premier nombre: %s -- %d\n", elements[0], count);
             return(EXIT_FAILURE);
         }
 
-        free(params);
         return 0;
     }
     return -1;
@@ -321,59 +311,52 @@ int colorChecking(char* jsonStringify){
 */
 int baliseChecking(char* jsonStringify){
     if(isThisCode(jsonStringify, "balises") == 0){
-
         char *params = getParams(jsonStringify);
-        char character;
-        int nbquotes = 0;
-        int arrayPos;
-        char args[32];
-        int numArg = 0;
-
-        int nbBalises; 
-
-
-        for(int i = 0; i< strlen(params); i++){
-
-            character = params[i];
-
-            if(character == '\"' && nbquotes%2 == 0){
-                nbquotes ++;
-                arrayPos = 0;
+        printf("mmm%s\n",params);
+        //Supprimer le premier et dernier caractère ([])
+        int longueurP = strlen(params);
+        for (int i = 0; i < longueurP - 1; i++) {
+            params[i] = params[i + 1];
+        }
+        longueurP--;
+        params[longueurP - 1] = '\0';
+        // Split de la chaine avec la virgule comme délimiteur
+        char *token = strtok(params, ",");
+        char *elements[100];
+        int count = 0;
+        while (token != NULL) {
+            //Supprimer le premier et dernier caractère
+            int longueur = strlen(token);
+            for (int i = 0; i < longueur - 1; i++) {
+                token[i] = token[i + 1];
             }
-            else if(character == '\"' && nbquotes%2 != 0){
-                nbquotes ++;
+            longueur--;
+            token[longueur - 1] = '\0';
 
-                if(numArg == 0 && (!atoi(args) || atoi(args) < 1)){
-                    puts("First argument must be a integer greater or equal to 1");
+            // Stocker les éléments dans un tableau
+            elements[count++] = token;
+            token = strtok(NULL, ",");
+        }
+        // Vérification du nombre d'éléments dans la liste
+        if (count - 1 == atoi(elements[0])) {
+            printf("Le nombre d'elements dans la liste est egal au premier nombre.\n");
+
+            // Vérification pour chaque élément sauf le premier
+            for (int i = 1; i < count; i++) {
+                printf("el0: %c\n",elements[i][0]);
+                // Vérification de la longueur et du début avec #
+                if (elements[i][0] == '#') {
+                    printf("L'element %d respecte les criteres.\n", i);
+                } else {
+                    printf("L'element %d ne respecte pas les criteres.\n", i);
                     return(EXIT_FAILURE);
                 }
-                else if(numArg == 0){
-                    nbBalises = atoi(args);
-                }
-                else{
-                    if(numArg > 0 && isABalise(args) != 0){
-                        puts("The second and more argument must begin by #");
-                        return(EXIT_FAILURE);
-                    }
-                }
-
-                memset(args, 0, strlen(args));
-                numArg++;
             }
-
-            if(nbquotes%2 != 0 && character != '\"'){
-                args[arrayPos] = character;
-                arrayPos++;
-            }
-        }
-
-        // -1 parce qu'on termine sur numArg++
-        if(nbBalises != numArg-1){
-            puts("number of balises doesn't match");
+        } else {
+            printf("Le nombre d'elements dans la liste n'est pas egal au premier nombre: %s -- %d\n", elements[0], count);
             return(EXIT_FAILURE);
         }
 
-        free(params);
         return 0;
     }
     return -1;

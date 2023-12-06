@@ -20,8 +20,8 @@
 #define MAXCLIENTS 3
 
 int socketfd;
-SocketObject procSocket = {"rien",0};
-SocketObject* clientSockets[MAXCLIENTS];
+struct SocketObject procSocket = {"rien",0};
+struct SocketObject clientSockets[MAXCLIENTS];
 
 int visualize_plot()
 {
@@ -142,12 +142,12 @@ int renvoie_couleur(int client_socket_fd, char **colors){
 
   for (int i = 0; i < MAXCLIENTS; i++) {
 
-    if (clientSockets[i]->socket == client_socket_fd) {
+    if (clientSockets[i].socket == client_socket_fd) {
 
-        strcat(file, clientSockets[i]->name);
+        strcat(file, clientSockets[i].name);
 
         strcat(file, "_");
-        sprintf(str, "%d", clientSockets[i]->socket);
+        sprintf(str, "%d", clientSockets[i].socket);
         strcat(file, str);
         strcat(file, ".txt");
 
@@ -191,12 +191,12 @@ int renvoie_balise(int client_socket_fd, char **balises){
 
   for (int i = 0; i < MAXCLIENTS; i++) {
 
-    if (clientSockets[i]->socket == client_socket_fd) {
+    if (clientSockets[i].socket == client_socket_fd) {
 
-        strcat(file, clientSockets[i]->name);
+        strcat(file, clientSockets[i].name);
 
         strcat(file, "_");
-        sprintf(str, "%d", clientSockets[i]->socket);
+        sprintf(str, "%d", clientSockets[i].socket);
         strcat(file, str);
         strcat(file, ".txt");
 
@@ -398,8 +398,8 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
   {
     free(object.code);
     for (int i = 0; i < MAXCLIENTS; i++) {
-        if (clientSockets[i]->socket == client_socket_fd) {
-            clientSockets[i]->name = object.valeurs[0];
+        if (clientSockets[i].socket == client_socket_fd) {
+            clientSockets[i].name = object.valeurs[0];
             break; // Sortir de la boucle une fois que le premier zéro est trouvé
         }
     };
@@ -444,8 +444,10 @@ void split_requests( char *data, const char *delimiter, char ***requests, int *n
 int main()
 {
   for (int i = 0; i < MAXCLIENTS; i++) {
-    clientSockets[i] = &procSocket;
+    clientSockets[i].name = "rien";
+    clientSockets[i].socket = 0;
   }
+
   int bind_status;
   struct sockaddr_in server_addr;
 
@@ -478,10 +480,11 @@ int main()
   // Enregistrez la fonction de gestion du signal Ctrl+C
   signal(SIGINT, gestionnaire_ctrl_c);
 
-  SocketObject so;
+  struct SocketObject so;
   so.name = "truc de base";
   so.socket = socketfd;
-  clientSockets[0] = &so;
+  clientSockets[0] = so;
+
   fd_set readfds;
 
   // Écouter les messages envoyés par le client en boucle infinie
@@ -493,7 +496,7 @@ int main()
     FD_SET(socketfd, &readfds);
     int maxSocket = socketfd;
     for (int i = 0; i < MAXCLIENTS; ++i) {
-        int clientSocket = clientSockets[i]->socket;
+        int clientSocket = clientSockets[i].socket;
         if (clientSocket > 0) {
             FD_SET(clientSocket, &readfds);
         }
@@ -504,7 +507,7 @@ int main()
     select(maxSocket + 1, &readfds, NULL, NULL, NULL);
     printf("Sockets list before: ");
     for (int i = 0; i < MAXCLIENTS; i++) {
-      printf("%d ", clientSockets[i]->socket);
+      printf("%d ", clientSockets[i].socket);
     }
     printf("\n");
     struct sockaddr_in client_addr;
@@ -517,7 +520,7 @@ int main()
 
       int position = -1; // Initialisation à -1 pour le cas où le zéro n'est pas trouvé
       for (int i = 0; i < MAXCLIENTS; i++) {
-          if (clientSockets[i]->socket == 0) {
+          if (clientSockets[i].socket == 0) {
               position = i;
               break; // Sortir de la boucle une fois que le premier zéro est trouvé
           }
@@ -526,19 +529,26 @@ int main()
       if (position == -1) {
           printf("Number of maximum clients exceed\n");
       }else{
-        SocketObject ns;
-        ns.name="un nouveau";
-        ns.socket = newSocket;
 
-        clientSockets[position] = &ns;
-        printf("%d\n",clientSockets[position]->socket);
+        printf("Sockets list 0: ");
+        for (int i = 0; i < MAXCLIENTS; i++) {
+          printf("%d ", clientSockets[i].socket);
+        }
+
+        clientSockets[position].socket = newSocket;
+
+        printf("Sockets list 1: ");
+        for (int i = 0; i < MAXCLIENTS; i++) {
+          printf("%d ", clientSockets[i].socket);
+        }
+        printf("\n");
 
         client_socket_fd = newSocket;
         printf("Create new socket\n");
       }
     }else{
       for (int i = 1; i < MAXCLIENTS; i++) {
-        int clientSocket = clientSockets[i]->socket;
+        int clientSocket = clientSockets[i].socket;
         if(FD_ISSET(clientSocket,&readfds))
         {
           client_socket_fd = clientSocket;
@@ -557,8 +567,8 @@ int main()
           {
             printf("Close socket\n");
             close(client_socket_fd);
-            clientSockets[i]->socket=0;
-            clientSockets[i]->name="rien";
+            clientSockets[i].socket=0;
+            clientSockets[i].name="rien";
           }else{
             char **requests;
             int num_requests;
@@ -577,7 +587,7 @@ int main()
     }   
     printf("Sockets list after: ");
     for (int i = 0; i < MAXCLIENTS; i++) {
-      printf("\n%s --> %d", clientSockets[i]->name, clientSockets[i]->socket);
+      printf("\n%s --> %d", clientSockets[i].name, clientSockets[i].socket);
     }
     printf("\n--------------\n");
   }

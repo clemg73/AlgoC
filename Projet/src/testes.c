@@ -23,6 +23,25 @@
 #include "validateur.h"
 
 
+void test_plusieurs_client(){
+
+    // & c'est pour exécuter la tâche en arriere plan
+    system("./serveur &");
+    sleep(2);
+
+    // On donne à un des deux clients un autre port
+    system("./client -nom -port 8089 &");
+    sleep(2);
+    system("./client -nom -port 8090 &");
+
+    // Attente pour permettre à tous les processus de s'exécuter
+    sleep(2);
+
+    // Envoyer le signal d'interruption à tous les processus
+    system("pkill -INT -P $!");
+
+}
+
 // Test pour savoir si les JSON sont correctements envoyées au serveur 
 void test_verification_JSON(){
 
@@ -75,6 +94,7 @@ void test_verification_JSON(){
 int main(){
 
     test_verification_JSON();
+    test_plusieurs_client();
     puts("Tous les tests ont été réalisés et on été réussis");
 
     return 0;

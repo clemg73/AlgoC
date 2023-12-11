@@ -163,17 +163,11 @@ int renvoie_couleur(int client_socket_fd, char **colors){
   }
   fclose(fp);
 
-  printf("ee\n");
-
   free(colors[0]);
   free(colors);
 
-  printf("ee\n");
-
   char *data = serializator("color","enregistré");
   int data_size = write(client_socket_fd, (void *)data, strnlen(data, 1024));
-
-  printf("ee\n");
 
   if (data_size < 0)
   {
@@ -275,7 +269,6 @@ int recois_numeros_calcule(int client_socket_fd, char **words, int nb)
     else if(strcmp(words[0],"min")==0)
     {
       result = strtod(words[1], NULL);
-      printf("%f\n",result);
       for (int compteur = 2 ; compteur <  nb; compteur++)
       {
         if(strtod(words[compteur], NULL) < result)
@@ -304,7 +297,6 @@ int recois_numeros_calcule(int client_socket_fd, char **words, int nb)
         avg += strtod(words[j], NULL);
       };
       avg = avg/(nb-1);
-      printf("%f\n",avg);
       double sommeCarresEcarts = 0.0;
       for (int i = 1; i < nb; i++) {
         double ecart = strtod(words[i], NULL) - avg;
@@ -360,7 +352,6 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
    * extraire le code des données envoyées par le client.
    * Les données envoyées par le client peuvent commencer par le mot "message :" ou un autre mot.
    */
-  printf("data: %s\n", data);
 
   JsonObject object = parser(data);
 
@@ -400,7 +391,7 @@ int recois_envoie_message(int client_socket_fd, char data[1024])
     for (int i = 0; i < MAXCLIENTS; i++) {
         if (clientSockets[i].socket == client_socket_fd) {
             clientSockets[i].name = object.valeurs[0];
-            break; // Sortir de la boucle une fois que le premier zéro est trouvé
+            break; 
         }
     };
   }
@@ -444,7 +435,7 @@ void split_requests( char *data, const char *delimiter, char ***requests, int *n
 int main()
 {
   for (int i = 0; i < MAXCLIENTS; i++) {
-    clientSockets[i].name = "rien";
+    clientSockets[i].name = "null";
     clientSockets[i].socket = 0;
   }
 
@@ -481,7 +472,7 @@ int main()
   signal(SIGINT, gestionnaire_ctrl_c);
 
   struct SocketObject so;
-  so.name = "truc de base";
+  so.name = "process socket";
   so.socket = socketfd;
   clientSockets[0] = so;
 
@@ -505,11 +496,7 @@ int main()
         }
     }
     select(maxSocket + 1, &readfds, NULL, NULL, NULL);
-    printf("Sockets list before: ");
-    for (int i = 0; i < MAXCLIENTS; i++) {
-      printf("%d ", clientSockets[i].socket);
-    }
-    printf("\n");
+    
     struct sockaddr_in client_addr;
     unsigned int client_addr_len = sizeof(client_addr);
     int client_socket_fd;
@@ -530,18 +517,9 @@ int main()
           printf("Number of maximum clients exceed\n");
       }else{
 
-        printf("Sockets list 0: ");
-        for (int i = 0; i < MAXCLIENTS; i++) {
-          printf("%d ", clientSockets[i].socket);
-        }
-
         clientSockets[position].socket = newSocket;
+        clientSockets[position].name = "waitings";
 
-        printf("Sockets list 1: ");
-        for (int i = 0; i < MAXCLIENTS; i++) {
-          printf("%d ", clientSockets[i].socket);
-        }
-        printf("\n");
 
         client_socket_fd = newSocket;
         printf("Create new socket\n");
@@ -565,41 +543,33 @@ int main()
             return (EXIT_FAILURE);
           }else if(data_size == 0)
           {
-            printf("Close socket\n");
+            printf("Close socket %i\n",client_socket_fd);
             close(client_socket_fd);
             clientSockets[i].socket=0;
-            clientSockets[i].name="rien";
+            clientSockets[i].name="null";
           }else{
             char **requests;
             int num_requests;
             split_requests(data, "}{", &requests, &num_requests);
 
             for (int i = 0; i < num_requests; i++) {
+              printf("Treatment of {%s} by %i\n",requests[i],client_socket_fd);
               recois_envoie_message(client_socket_fd, requests[i]);
-              free(requests[i]);  // Libérez la mémoire de chaque requête
+              free(requests[i]);
             }
 
-            free(requests);  // Libérez la mémoire du tableau de requêtes
+            free(requests);
 
           }
         }
       }
     }   
-    printf("Sockets list after: ");
+    printf("Sockets list after treatment: (name --> socket)");
     for (int i = 0; i < MAXCLIENTS; i++) {
-      printf("\n%s --> %d", clientSockets[i].name, clientSockets[i].socket);
+      printf("\n  %s --> %d", clientSockets[i].name, clientSockets[i].socket);
     }
     printf("\n--------------\n");
   }
 
   return 0;
 }
-
-/*
-Bonnnn
-le probleme c'est que quand on lance un client, ça envoie deux requetes mais ça ne passe pas 2 fois dans recois_envoie_message.
-Alors que quand on le stop et qu'on relance, oui...
-Après le système pour enregister les couleurs dans un fichier colors_nomMachine_socket.txt est mis en place mais pas testé !!
-Il faudra faire pareil pour les balises
-Et enfin les tests
-*/

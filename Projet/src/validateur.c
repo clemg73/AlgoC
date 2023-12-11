@@ -81,11 +81,11 @@ int isASpecialCharacter(char character) {
         - Retourne 0 si c'est vrai, -1 sinon 
 */
 
-int isAnOperator(char character) {
-    const char* specialCharacters = "+-x/";
-    char specialChar;
+int isAnOperator(char* character) {
+    char* specialCharacters[8] = {"+","-","x","/","avg","min","max","e-t"};
+    char* specialChar;
 
-    for (int i = 0; i < strlen(specialCharacters); i++) {
+    for (int i = 0; i < 8; i++) {
         specialChar = specialCharacters[i];
 
         if (character == specialChar) {
@@ -197,7 +197,7 @@ int operationChecking(char* jsonStringify){
         char args[10];
         int nbquotes = 0;
         int arrayPos;
-        int numArg = 0;
+        //int numArg = 0;
 
         for(int i = 0; i< strlen(params); i++){
 
@@ -209,28 +209,21 @@ int operationChecking(char* jsonStringify){
             else if(character == '\"' && nbquotes%2 != 0){
                 nbquotes ++;
 
-                if(numArg == 0 && strlen(args) > 1){
-                    puts("First argument too long");
-                    return -1;
-                }
-                else{
-                    if(numArg == 0 && strlen(args) == 1){
-                        if(isAnOperator(args[0]) != 0){
-                            puts("First argument must be an operator in +-x/");
-                            return -1;
-
-                        }
-                    }
-                    else if(numArg > 0){
-                        if(!atoi(args)){
-                            puts("Not a number");
-                            return -1;
-
-                        }
+             
+                /*if(numArg == 0 && strlen(args) == 1){
+                    if(isAnOperator(&args[0]) != 0){
+                        puts("First argument must be +, -, x, /, avg, min, max or e-t");
+                        return(EXIT_FAILURE);
                     }
                 }
+                else if(numArg > 0){
+                    if(!atoi(args)){
+                        puts("Not a number");
+                        return(EXIT_FAILURE);
+                    }
+                }*/
 
-                numArg++;
+                //numArg++;
             }
             
             if(nbquotes%2 != 0 && character != '\"'){

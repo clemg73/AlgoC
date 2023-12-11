@@ -39,16 +39,6 @@ int envoie_infos_machine(int socketfd){
   // la réinitialisation de l'ensemble des données
   memset(data, 0, strlen(data));
 
-  /*// lire les données de la socket
-  int read_status = read(socketfd, data, 1024);
-  if (read_status < 0)
-  {
-    perror("erreur lecture");
-    return -1;
-  }
-
-  JsonObject object = parser(data);
-  printf("Réponse nom: %s\n", *object.valeurs);*/
   free(data);
   return 0;
 }
@@ -138,7 +128,6 @@ int envoie_operateur_numeros(int socketfd, char* myList[], int nb)
 int envoie_couleurs(int socketfd, char *myList[], int len){
   int compteur;
   char colors[1024]="";
-  //sprintf(colors, "%d ", len);
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
       strcat(colors, myList[compteur]);
@@ -180,13 +169,11 @@ int envoie_balise(int socketfd, char *myList[], int len){
   
   int compteur;
   char balises[1024]="";
-  //sprintf(colors, "%d ", len);
   for (compteur = 0 ; compteur <  len; compteur++)
   { 
       strcat(balises, myList[compteur]);
       strcat(balises, " ");
   }
-  printf("ee");
   char *data = serializator("balises",balises);
   if(baliseChecking(data) != 0){
     perror("erreur de format");

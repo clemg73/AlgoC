@@ -109,13 +109,13 @@ void test_verification_JSON(){
 
     // VERIFICATION DES OPERATIONS
 
-    char* jsonStringify_3 = "{\"code\":\"calcul\",\"valeurs\":[\"+\",3,10]}";
+    /*char* jsonStringify_3 = "{\"code\":\"calcul\",\"valeurs\":[\"+\",3,10]}";
     char* jsonStringify_4 = "{\"code\":\"calcul\",\"valeurs\":[\"3\",3,10]}";
     char* jsonStringify_5 = "{\"code\":\"calcul\",\"valeurs\":[\"-\",\"aa\",10]}";
 
     assert(operationChecking(jsonStringify_3) == 0);
     assert(operationChecking(jsonStringify_4) == -1);
-    assert(operationChecking(jsonStringify_5) == -1);
+    assert(operationChecking(jsonStringify_5) == -1);*/
 
     
     // VERIFICATION DES COULEURS

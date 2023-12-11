@@ -42,6 +42,59 @@ void test_plusieurs_client(){
 
 }
 
+void test_envoi_reception_client(){
+
+    // & c'est pour exécuter la tâche en arriere plan
+    system("./serveur &");
+    sleep(2);
+
+    // On donne à un des deux clients un autre port
+    system("./client -nom &");
+    sleep(2);
+
+    system("stop=$(pidof ./client)");
+    system("kill -INT $stop");
+
+    // Attente pour permettre à tous les processus de s'exécuter
+    sleep(2);
+
+    system("./client -couleur 2 aaaaaa bbbbbb &");
+    sleep(2);
+
+    system("stop=$(pidof ./client)");
+    system("kill -INT $stop");
+
+    sleep(2);
+
+    system("./client -balises 2 aaaaaa bbbbbb &");
+    sleep(2);
+
+    system("stop=$(pidof ./client)");
+    system("kill -INT $stop");
+
+    sleep(2);
+
+    system("./client -calcul + 3 5 &");
+    sleep(2);
+
+    system("stop=$(pidof ./client)");
+    system("kill -INT $stop");
+
+    sleep(2);
+
+    system("./client -message &");
+    sleep(2);
+
+    system("stop=$(pidof ./client)");
+    system("kill -INT $stop");
+
+    sleep(2);
+
+    system("stop=$(pidof ./serveur)");
+    system("kill -INT $stop");
+
+}
+
 // Test pour savoir si les JSON sont correctements envoyées au serveur 
 void test_verification_JSON(){
 
@@ -94,6 +147,9 @@ void test_verification_JSON(){
 int main(){
 
     test_verification_JSON();
+    puts("------------------------------------------");
+    test_envoi_reception_client();
+    puts("------------------------------------------");
     test_plusieurs_client();
     puts("Tous les tests ont été réalisés et on été réussis");
 

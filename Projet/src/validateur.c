@@ -164,7 +164,7 @@ int quotesChecking(char* jsonStringify)
             //Si le nombre de guillements est pair, un guillement est fermé
             if(numberofQuotes%2 == 0 && isASpecialCharacter(character) != 0 && isdigit(character) == 0 && isAQuote(character) != 0){
                 puts("There's a value without quotes");
-                return(EXIT_FAILURE);
+                return -1;
             }
 
     }
@@ -176,7 +176,7 @@ int quotesChecking(char* jsonStringify)
     }else
     {
         puts("There's a quote no expected");
-        return(EXIT_FAILURE);
+        return -1;
     }
     
 }
@@ -211,19 +211,21 @@ int operationChecking(char* jsonStringify){
 
                 if(numArg == 0 && strlen(args) > 1){
                     puts("First argument too long");
-                    return(EXIT_FAILURE);
+                    return -1;
                 }
                 else{
                     if(numArg == 0 && strlen(args) == 1){
                         if(isAnOperator(args[0]) != 0){
                             puts("First argument must be an operator in +-x/");
-                            return(EXIT_FAILURE);
+                            return -1;
+
                         }
                     }
                     else if(numArg > 0){
                         if(!atoi(args)){
                             puts("Not a number");
-                            return(EXIT_FAILURE);
+                            return -1;
+
                         }
                     }
                 }
@@ -289,12 +291,13 @@ int colorChecking(char* jsonStringify){
                     printf("L'element %d respecte les criteres.\n", i);
                 } else {
                     printf("L'element %d ne respecte pas les criteres.\n", i);
-                    return(EXIT_FAILURE);
+                    return -1;
+
                 }
             }
         } else {
             printf("Le nombre d'elements dans la liste n'est pas egal au premier nombre: %s -- %d\n", elements[0], count);
-            return(EXIT_FAILURE);
+            return -1;
         }
 
         return 0;
@@ -349,12 +352,12 @@ int baliseChecking(char* jsonStringify){
                     printf("L'element %d respecte les criteres.\n", i);
                 } else {
                     printf("L'element %d ne respecte pas les criteres.\n", i);
-                    return(EXIT_FAILURE);
+                    return -1;
                 }
             }
         } else {
             printf("Le nombre d'elements dans la liste n'est pas egal au premier nombre: %s -- %d\n", elements[0], count);
-            return(EXIT_FAILURE);
+            return -1;
         }
 
         return 0;
